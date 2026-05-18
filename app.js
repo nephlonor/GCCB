@@ -28,30 +28,26 @@ const TEE_COLORS = {
   RED:    '#ff3b30',
 };
 
-// Per-hole info shown in the side panel. The WHITE distances come from
-// the source HTMLs; par/HCP and other-teebox distances need to be
-// filled in from the club scorecard (the gccbasel.ch site is blocked
-// from this build environment).
-//   tee number -> color: 55=RED, 58=BLUE, 62=YELLOW, 63=WHITE
+// Per-hole scorecard. Tee numbers map: 63=WHITE, 62=YELLOW, 58=BLUE, 55=RED.
 const HOLE_INFO = {
-  1:  { par: 4, hcp: 16, dist: { WHITE: 315, YELLOW: null, BLUE: null, RED: null } },
-  2:  { par: null, hcp: null, dist: { WHITE: 447, YELLOW: null, BLUE: null, RED: null } },
-  3:  { par: null, hcp: null, dist: { WHITE: 203, YELLOW: null, BLUE: null, RED: null } },
-  4:  { par: null, hcp: null, dist: { WHITE: 397, YELLOW: null, BLUE: null, RED: null } },
-  5:  { par: null, hcp: null, dist: { WHITE: 381, YELLOW: null, BLUE: null, RED: null } },
-  6:  { par: null, hcp: null, dist: { WHITE: 510, YELLOW: null, BLUE: null, RED: null } },
-  7:  { par: null, hcp: null, dist: { WHITE: 131, YELLOW: null, BLUE: null, RED: null } },
-  8:  { par: null, hcp: null, dist: { WHITE: 355, YELLOW: null, BLUE: null, RED: null } },
-  9:  { par: null, hcp: null, dist: { WHITE: 315, YELLOW: null, BLUE: null, RED: null } },
-  10: { par: null, hcp: null, dist: { WHITE: 454, YELLOW: null, BLUE: null, RED: null } },
-  11: { par: null, hcp: null, dist: { WHITE: 185, YELLOW: null, BLUE: null, RED: null } },
-  12: { par: null, hcp: null, dist: { WHITE: 350, YELLOW: null, BLUE: null, RED: null } },
-  13: { par: null, hcp: null, dist: { WHITE: 387, YELLOW: null, BLUE: null, RED: null } },
-  14: { par: null, hcp: null, dist: { WHITE: 386, YELLOW: null, BLUE: null, RED: null } },
-  15: { par: null, hcp: null, dist: { WHITE: 302, YELLOW: null, BLUE: null, RED: null } },
-  16: { par: null, hcp: null, dist: { WHITE: 167, YELLOW: null, BLUE: null, RED: null } },
-  17: { par: null, hcp: null, dist: { WHITE: 415, YELLOW: null, BLUE: null, RED: null } },
-  18: { par: null, hcp: null, dist: { WHITE: 549, YELLOW: null, BLUE: null, RED: null } },
+  1:  { par: 4, hcp: 16, dist: { WHITE: 315, YELLOW: 305, BLUE: 295, RED: 287 } },
+  2:  { par: 5, hcp:  8, dist: { WHITE: 447, YELLOW: 437, BLUE: 403, RED: 384 } },
+  3:  { par: 3, hcp: 12, dist: { WHITE: 203, YELLOW: 193, BLUE: 176, RED: 149 } },
+  4:  { par: 4, hcp:  2, dist: { WHITE: 397, YELLOW: 385, BLUE: 353, RED: 353 } },
+  5:  { par: 4, hcp: 10, dist: { WHITE: 381, YELLOW: 359, BLUE: 329, RED: 309 } },
+  6:  { par: 5, hcp:  4, dist: { WHITE: 510, YELLOW: 490, BLUE: 436, RED: 436 } },
+  7:  { par: 3, hcp: 18, dist: { WHITE: 131, YELLOW: 119, BLUE: 113, RED: 102 } },
+  8:  { par: 4, hcp:  6, dist: { WHITE: 355, YELLOW: 331, BLUE: 309, RED: 296 } },
+  9:  { par: 4, hcp: 14, dist: { WHITE: 315, YELLOW: 299, BLUE: 270, RED: 258 } },
+  10: { par: 5, hcp: 15, dist: { WHITE: 454, YELLOW: 438, BLUE: 412, RED: 391 } },
+  11: { par: 3, hcp: 11, dist: { WHITE: 185, YELLOW: 175, BLUE: 167, RED: 159 } },
+  12: { par: 4, hcp:  7, dist: { WHITE: 350, YELLOW: 328, BLUE: 306, RED: 274 } },
+  13: { par: 4, hcp:  1, dist: { WHITE: 387, YELLOW: 367, BLUE: 330, RED: 330 } },
+  14: { par: 4, hcp:  5, dist: { WHITE: 386, YELLOW: 372, BLUE: 353, RED: 331 } },
+  15: { par: 4, hcp: 13, dist: { WHITE: 302, YELLOW: 292, BLUE: 273, RED: 266 } },
+  16: { par: 3, hcp: 17, dist: { WHITE: 167, YELLOW: 159, BLUE: 141, RED: 141 } },
+  17: { par: 4, hcp:  3, dist: { WHITE: 415, YELLOW: 384, BLUE: 367, RED: 339 } },
+  18: { par: 5, hcp:  9, dist: { WHITE: 549, YELLOW: 497, BLUE: 479, RED: 445 } },
 };
 
 const TEE_NUMBERS = { WHITE: 63, YELLOW: 62, BLUE: 58, RED: 55 };
@@ -139,7 +135,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=8`;
+  bgImage.src = `holes/loch${n}.png?v=9`;
   updateHoleInfo();
   redraw();
 }
