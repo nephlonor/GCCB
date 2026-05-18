@@ -89,7 +89,6 @@ const holeSelect = document.getElementById('holeSelect');
 const holeGrid = document.getElementById('holeGrid');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
-const clearBtn = document.getElementById('clearBtn');
 const nineTabs = document.getElementById('nineTabs');
 
 let currentHole = parseInt(localStorage.getItem('gccb.hole')) || 1;
@@ -142,7 +141,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=16`;
+  bgImage.src = `holes/loch${n}.png?v=17`;
   updateHoleInfo();
   redraw();
 }
@@ -365,11 +364,6 @@ prevBtn.addEventListener('click', () => selectHole(currentHole - 1));
 nextBtn.addEventListener('click', () => selectHole(currentHole + 1));
 teeboxSelect.addEventListener('change', () => { updateHoleInfo(); redraw(); });
 measurementModeSwitch.addEventListener('change', () => {
-  firstPoint = null;
-  lastClick = null;
-  redraw();
-});
-clearBtn.addEventListener('click', () => {
   firstPoint = null;
   lastClick = null;
   redraw();
