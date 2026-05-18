@@ -59,6 +59,28 @@ const HOLE_INFO = {
 
 const TEE_NUMBERS = { WHITE: 62, YELLOW: 59, BLUE: 55, RED: 53 };
 
+// YouTube video IDs for each hole.
+const HOLE_VIDEOS = {
+  1:  '8SCCX-bhKO4',
+  2:  '0KjXjuzE_kI',
+  3:  'jyQka61rcIE',
+  4:  'k7mkw0wI9t4',
+  5:  'B1FCJqx0F74',
+  6:  'zrMKES8dKjg',
+  7:  'idW_ZrAB7xY',
+  8:  'Nl8DQlOsqyI',
+  9:  'XE2yOgoAFSY',
+  10: 'ex5_VbRE7xM',
+  11: 'h6XUwTcbcTQ',
+  12: 'P1vgbe_w15c',
+  13: 'bkFB5Hor44A',
+  14: 'Cd7hs5O4GNA',
+  15: 'Ir9Lg3mVWnI',
+  16: 'MvipzleIqVc',
+  17: 'iGp9d2V6t7k',
+  18: 'sOWilbXL0po',
+};
+
 function updateHoleInfo() {
   const info = HOLE_INFO[currentHole];
   const parEl = document.getElementById('parVal');
@@ -138,9 +160,20 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=22`;
+  bgImage.src = `holes/loch${n}.png?v=23`;
   updateHoleInfo();
+  updateHoleVideo();
   redraw();
+}
+
+function updateHoleVideo() {
+  const iframe = document.getElementById('holeVideo');
+  if (!iframe) return;
+  const id = HOLE_VIDEOS[currentHole];
+  // Lazy-load: only set src when the hole is selected, so the iframe
+  // doesn't fetch a video for a hole the user hasn't opened yet.
+  const desired = id ? `https://www.youtube.com/embed/${id}?rel=0` : '';
+  if (iframe.src !== desired) iframe.src = desired;
 }
 
 function selectHole(n) {
