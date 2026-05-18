@@ -96,7 +96,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=3`;
+  bgImage.src = `holes/loch${n}.png?v=4`;
   redraw();
 }
 
@@ -160,34 +160,33 @@ function clear() {
 }
 
 function drawTeeAndGreen() {
+  // In point-to-point mode the green and tee markers are hidden so they
+  // don't compete visually with the user's measurement.
+  if (measurementModeSwitch.checked) return;
   const hole = HOLES[currentHole];
   const tee = hole.tees[teeboxSelect.value];
   drawPoint(hole.green, '#2ecc71', 9);
   drawPoint(tee, TEE_COLORS[teeboxSelect.value] || '#fff', 9);
 }
 
-function updateDisplay(clickPos) {
-  if (!clickPos) return;
+function updateDisplay() {
   const hole = HOLES[currentHole];
-  const tee = hole.tees[teeboxSelect.value];
   const ballColor = '#ffd54a';
 
   if (!measurementModeSwitch.checked) {
-    drawLine(tee, clickPos, 'rgba(0,0,0,0.85)', 2.5);
-    drawLine(hole.green, clickPos, 'rgba(0,0,0,0.85)', 2.5);
-    drawPoint(clickPos, ballColor, 9);
-
-    const approach = Math.round(getLength(hole.green, clickPos));
-    const teeshot = Math.round(getLength(tee, clickPos));
-    drawLabel(`${approach}m`, clickPos.x + 12, clickPos.y);
-    drawLabel(`${teeshot}m`, clickPos.x + 12, clickPos.y + 16);
+    if (!lastClick) return;
+    const tee = hole.tees[teeboxSelect.value];
+    drawLine(tee, lastClick, 'rgba(0,0,0,0.85)', 2.5);
+    drawLine(hole.green, lastClick, 'rgba(0,0,0,0.85)', 2.5);
+    drawPoint(lastClick, ballColor, 9);
+    drawLabel(`${Math.round(getLength(hole.green, lastClick))}m`, lastClick.x + 12, lastClick.y);
+    drawLabel(`${Math.round(getLength(tee, lastClick))}m`,        lastClick.x + 12, lastClick.y + 16);
   } else {
-    if (firstPoint && firstPoint !== clickPos) drawPoint(firstPoint, ballColor, 9);
-    drawPoint(clickPos, ballColor, 9);
-    if (firstPoint && firstPoint !== clickPos) {
-      drawLine(firstPoint, clickPos, 'rgba(0,0,0,0.85)', 2.5);
-      const distance = Math.round(getLength(firstPoint, clickPos));
-      drawLabel(`${distance}m`, clickPos.x + 12, clickPos.y + 10);
+    if (firstPoint) drawPoint(firstPoint, ballColor, 9);
+    if (lastClick) drawPoint(lastClick, ballColor, 9);
+    if (firstPoint && lastClick) {
+      drawLine(firstPoint, lastClick, 'rgba(0,0,0,0.85)', 2.5);
+      drawLabel(`${Math.round(getLength(firstPoint, lastClick))}m`, lastClick.x + 12, lastClick.y + 10);
     }
   }
 }
@@ -195,7 +194,7 @@ function updateDisplay(clickPos) {
 function redraw() {
   clear();
   drawTeeAndGreen();
-  updateDisplay(lastClick);
+  updateDisplay();
 }
 
 function getCanvasPoint(e) {
@@ -209,25 +208,109 @@ function getCanvasPoint(e) {
   };
 }
 
-canvas.addEventListener('click', (e) => {
-  const p = getCanvasPoint(e);
+// Hit radius (in logical 210x700 coords) for grabbing a placed dot.
+const HIT_RADIUS = 16;
+
+function hitTest(p) {
+  // Returns the *user-placed* dot under the pointer, or null.
+  // Tees and the green are intentionally not draggable.
+  if (measurementModeSwitch.checked) {
+    if (lastClick  && getDistance(lastClick,  p) <= HIT_RADIUS) return 'last';
+    if (firstPoint && getDistance(firstPoint, p) <= HIT_RADIUS) return 'first';
+  } else {
+    if (lastClick  && getDistance(lastClick,  p) <= HIT_RADIUS) return 'last';
+  }
+  return null;
+}
+
+function placeTap(p) {
   if (measurementModeSwitch.checked) {
     if (!firstPoint) {
-      // 1st click: mark first point, show it immediately.
+      // 1st tap: drop first point on its own.
       firstPoint = p;
-      lastClick = p;
-    } else if (!lastClick || lastClick === firstPoint) {
-      // 2nd click: measure to first point.
+      lastClick = null;
+    } else if (!lastClick) {
+      // 2nd tap: drop second point and reveal the measurement.
       lastClick = p;
     } else {
-      // 3rd click: start a new measurement from this point.
+      // 3rd tap: restart with a fresh first point.
       firstPoint = p;
-      lastClick = p;
+      lastClick = null;
     }
   } else {
     lastClick = p;
   }
   redraw();
+}
+
+// Pointer handling: single-finger drag of placed dots, single-finger
+// tap to drop a new dot, horizontal swipe to change hole. Multi-touch
+// is left alone so the browser can pinch-zoom.
+let activePointers = 0;
+let dragTarget = null;      // 'last' | 'first' | null
+let downAt = null;          // { x, y, time } client coords of pointerdown
+let moved = false;          // exceeded the tap threshold
+
+canvas.addEventListener('pointerdown', (e) => {
+  activePointers++;
+  if (activePointers > 1) {
+    // Pinch starting — abandon any drag in progress.
+    dragTarget = null;
+    downAt = null;
+    return;
+  }
+  const p = getCanvasPoint(e);
+  downAt = { x: e.clientX, y: e.clientY, time: Date.now() };
+  moved = false;
+  const hit = hitTest(p);
+  if (hit) {
+    dragTarget = hit;
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault();
+  }
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (activePointers > 1) return;
+  if (!downAt) return;
+  const dx = e.clientX - downAt.x;
+  const dy = e.clientY - downAt.y;
+  if (!moved && Math.hypot(dx, dy) > 6) moved = true;
+  if (!dragTarget) return;
+  const p = getCanvasPoint(e);
+  if (dragTarget === 'last')  lastClick = p;
+  if (dragTarget === 'first') firstPoint = p;
+  redraw();
+  e.preventDefault();
+});
+
+function endPointer(e) {
+  activePointers = Math.max(0, activePointers - 1);
+  const wasDrag = !!dragTarget;
+  dragTarget = null;
+  if (!downAt) return;
+  const dx = e.clientX - downAt.x;
+  const dy = e.clientY - downAt.y;
+  const dist = Math.hypot(dx, dy);
+  const dt = Date.now() - downAt.time;
+  downAt = null;
+  if (wasDrag) return;
+  if (!moved && dist < 10 && dt < 500) {
+    placeTap(getCanvasPoint(e));
+    return;
+  }
+  // Treat a clear horizontal flick as a hole-change swipe.
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dx < 0 && currentHole < 18) selectHole(currentHole + 1);
+    else if (dx > 0 && currentHole > 1) selectHole(currentHole - 1);
+  }
+}
+
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', (e) => {
+  activePointers = Math.max(0, activePointers - 1);
+  dragTarget = null;
+  downAt = null;
 });
 
 holeSelect.addEventListener('change', () => selectHole(parseInt(holeSelect.value)));
@@ -252,25 +335,5 @@ nineTabs.querySelectorAll('button').forEach(b => {
     buildHoleGrid();
   });
 });
-
-// Swipe between holes
-let touchStartX = null;
-let touchStartY = null;
-canvas.addEventListener('touchstart', (e) => {
-  const t = e.touches[0];
-  touchStartX = t.clientX;
-  touchStartY = t.clientY;
-}, { passive: true });
-canvas.addEventListener('touchend', (e) => {
-  if (touchStartX === null) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchStartX;
-  const dy = t.clientY - touchStartY;
-  touchStartX = touchStartY = null;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-    if (dx < 0 && currentHole < 18) selectHole(currentHole + 1);
-    else if (dx > 0 && currentHole > 1) selectHole(currentHole - 1);
-  }
-}, { passive: true });
 
 loadHole(currentHole);
