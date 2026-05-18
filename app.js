@@ -28,7 +28,7 @@ const TEE_COLORS = {
   RED:    '#ff3b30',
 };
 
-// Per-hole scorecard. Tee numbers map: 63=WHITE, 62=YELLOW, 58=BLUE, 55=RED.
+// Per-hole scorecard. Tee numbers map: 62=WHITE, 59=YELLOW, 55=BLUE, 53=RED.
 const HOLE_INFO = {
   1:  { par: 4, hcp: 16, dist: { WHITE: 315, YELLOW: 305, BLUE: 295, RED: 287 } },
   2:  { par: 5, hcp:  8, dist: { WHITE: 447, YELLOW: 437, BLUE: 403, RED: 384 } },
@@ -50,7 +50,7 @@ const HOLE_INFO = {
   18: { par: 5, hcp:  9, dist: { WHITE: 549, YELLOW: 497, BLUE: 479, RED: 445 } },
 };
 
-const TEE_NUMBERS = { WHITE: 63, YELLOW: 62, BLUE: 58, RED: 55 };
+const TEE_NUMBERS = { WHITE: 62, YELLOW: 59, BLUE: 55, RED: 53 };
 
 function updateHoleInfo() {
   const info = HOLE_INFO[currentHole];
@@ -135,7 +135,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=9`;
+  bgImage.src = `holes/loch${n}.png?v=10`;
   updateHoleInfo();
   redraw();
 }
