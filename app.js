@@ -30,12 +30,13 @@ const TEE_COLORS = {
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-// Hole coordinates were defined for a 210x700 logical canvas. The canvas
-// element is 840x2800 internally for crisp rendering; scale once so all
-// drawing logic stays in the original 210x700 space.
+// Hole coordinates were authored for a 210x700 canvas. The canvas
+// element is 840x2800 internally for crisp rendering; SCALE maps the
+// logical 210x700 space to the actual pixel buffer.
 const COORD_W = 210;
 const COORD_H = 700;
-ctx.scale(canvas.width / COORD_W, canvas.height / COORD_H);
+const SCALE = canvas.width / COORD_W; // 4
+const sx = v => v * SCALE;
 const teeboxSelect = document.getElementById('teeboxSelect');
 const measurementModeSwitch = document.getElementById('measurementMode');
 const holeSelect = document.getElementById('holeSelect');
@@ -95,7 +96,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png`;
+  bgImage.src = `holes/loch${n}.png?v=3`;
   redraw();
 }
 
@@ -106,20 +107,20 @@ function selectHole(n) {
 
 function drawPoint(point, color, size) {
   ctx.beginPath();
-  ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+  ctx.arc(sx(point.x), sx(point.y), sx(size), 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
   ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = sx(1.2);
   ctx.stroke();
 }
 
 function drawLine(p1, p2, color, width) {
   ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
+  ctx.moveTo(sx(p1.x), sx(p1.y));
+  ctx.lineTo(sx(p2.x), sx(p2.y));
   ctx.strokeStyle = color;
-  ctx.lineWidth = width;
+  ctx.lineWidth = sx(width);
   ctx.stroke();
 }
 
@@ -133,25 +134,27 @@ function getLength(p1, p2) {
 }
 
 function drawLabel(text, x, y) {
-  ctx.font = 'bold 14px -apple-system, Helvetica, Arial';
+  const fontPx = sx(14);
+  ctx.font = `bold ${fontPx}px -apple-system, Helvetica, Arial`;
   const w = ctx.measureText(text).width;
+  const padX = sx(3), padY = sx(2);
   ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.fillRect(x - 2, y - 13, w + 6, 17);
+  ctx.fillRect(sx(x) - padX, sx(y) - fontPx + padY, w + padX * 2, fontPx + padY);
   ctx.fillStyle = '#000';
-  ctx.fillText(text, x + 1, y);
+  ctx.fillText(text, sx(x), sx(y));
 }
 
 function clear() {
-  ctx.clearRect(0, 0, COORD_W, COORD_H);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (bgLoaded && bgImage) {
-    ctx.drawImage(bgImage, 0, 0, COORD_W, COORD_H);
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
   } else {
     ctx.fillStyle = '#e8eef2';
-    ctx.fillRect(0, 0, COORD_W, COORD_H);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#9ab';
-    ctx.font = 'bold 18px -apple-system, Helvetica, Arial';
+    ctx.font = `bold ${sx(18)}px -apple-system, Helvetica, Arial`;
     ctx.textAlign = 'center';
-    ctx.fillText(`Hole ${currentHole}`, COORD_W/2, COORD_H/2);
+    ctx.fillText(`Hole ${currentHole}`, canvas.width / 2, canvas.height / 2);
     ctx.textAlign = 'start';
   }
 }
@@ -159,8 +162,8 @@ function clear() {
 function drawTeeAndGreen() {
   const hole = HOLES[currentHole];
   const tee = hole.tees[teeboxSelect.value];
-  drawPoint(hole.green, '#2ecc71', 6);
-  drawPoint(tee, TEE_COLORS[teeboxSelect.value] || '#fff', 6);
+  drawPoint(hole.green, '#2ecc71', 9);
+  drawPoint(tee, TEE_COLORS[teeboxSelect.value] || '#fff', 9);
 }
 
 function updateDisplay(clickPos) {
@@ -170,21 +173,21 @@ function updateDisplay(clickPos) {
   const ballColor = '#ffd54a';
 
   if (!measurementModeSwitch.checked) {
-    drawLine(tee, clickPos, 'rgba(0,0,0,0.85)', 1.8);
-    drawLine(hole.green, clickPos, 'rgba(0,0,0,0.85)', 1.8);
-    drawPoint(clickPos, ballColor, 6);
+    drawLine(tee, clickPos, 'rgba(0,0,0,0.85)', 2.5);
+    drawLine(hole.green, clickPos, 'rgba(0,0,0,0.85)', 2.5);
+    drawPoint(clickPos, ballColor, 9);
 
     const approach = Math.round(getLength(hole.green, clickPos));
     const teeshot = Math.round(getLength(tee, clickPos));
-    drawLabel(`${approach}m`, clickPos.x + 10, clickPos.y);
-    drawLabel(`${teeshot}m`, clickPos.x + 10, clickPos.y + 18);
+    drawLabel(`${approach}m`, clickPos.x + 12, clickPos.y);
+    drawLabel(`${teeshot}m`, clickPos.x + 12, clickPos.y + 16);
   } else {
-    if (firstPoint && firstPoint !== clickPos) drawPoint(firstPoint, ballColor, 6);
-    drawPoint(clickPos, ballColor, 6);
+    if (firstPoint && firstPoint !== clickPos) drawPoint(firstPoint, ballColor, 9);
+    drawPoint(clickPos, ballColor, 9);
     if (firstPoint && firstPoint !== clickPos) {
-      drawLine(firstPoint, clickPos, 'rgba(0,0,0,0.85)', 1.8);
+      drawLine(firstPoint, clickPos, 'rgba(0,0,0,0.85)', 2.5);
       const distance = Math.round(getLength(firstPoint, clickPos));
-      drawLabel(`${distance}m`, clickPos.x + 10, clickPos.y + 10);
+      drawLabel(`${distance}m`, clickPos.x + 12, clickPos.y + 10);
     }
   }
 }
