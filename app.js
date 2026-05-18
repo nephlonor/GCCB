@@ -135,7 +135,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=10`;
+  bgImage.src = `holes/loch${n}.png?v=11`;
   updateHoleInfo();
   redraw();
 }
@@ -219,7 +219,10 @@ function updateDisplay() {
     drawLine(tee, lastClick, 'rgba(0,0,0,0.85)', 2.5);
     drawLine(hole.green, lastClick, 'rgba(0,0,0,0.85)', 2.5);
     drawPoint(lastClick, ballColor, 9);
-    drawLabel(`${Math.round(getLength(hole.green, lastClick))}m`, lastClick.x + 12, lastClick.y);
+    // Green marker sits at the front of the green on the map; pin
+    // distance is roughly 12m further (greens are ~25m deep).
+    const GREEN_DEPTH_OFFSET = 12;
+    drawLabel(`${Math.round(getLength(hole.green, lastClick)) + GREEN_DEPTH_OFFSET}m`, lastClick.x + 12, lastClick.y);
     drawLabel(`${Math.round(getLength(tee, lastClick))}m`,        lastClick.x + 12, lastClick.y + 16);
   } else {
     if (firstPoint) drawPoint(firstPoint, ballColor, 9);
