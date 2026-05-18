@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - claude/golf-shot-tracker-app-BzEOh
+      - feat/ad-banner
   workflow_dispatch:
 
 permissions:
