@@ -30,6 +30,12 @@ const TEE_COLORS = {
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+// Hole coordinates were defined for a 210x700 logical canvas. The canvas
+// element is 840x2800 internally for crisp rendering; scale once so all
+// drawing logic stays in the original 210x700 space.
+const COORD_W = 210;
+const COORD_H = 700;
+ctx.scale(canvas.width / COORD_W, canvas.height / COORD_H);
 const teeboxSelect = document.getElementById('teeboxSelect');
 const measurementModeSwitch = document.getElementById('measurementMode');
 const holeSelect = document.getElementById('holeSelect');
@@ -136,16 +142,16 @@ function drawLabel(text, x, y) {
 }
 
 function clear() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, COORD_W, COORD_H);
   if (bgLoaded && bgImage) {
-    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImage, 0, 0, COORD_W, COORD_H);
   } else {
     ctx.fillStyle = '#e8eef2';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, COORD_W, COORD_H);
     ctx.fillStyle = '#9ab';
     ctx.font = 'bold 18px -apple-system, Helvetica, Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`Hole ${currentHole}`, canvas.width/2, canvas.height/2);
+    ctx.fillText(`Hole ${currentHole}`, COORD_W/2, COORD_H/2);
     ctx.textAlign = 'start';
   }
 }
@@ -170,18 +176,16 @@ function updateDisplay(clickPos) {
 
     const approach = Math.round(getLength(hole.green, clickPos));
     const teeshot = Math.round(getLength(tee, clickPos));
-    drawLabel(`${approach}m → green`, clickPos.x + 10, clickPos.y);
-    drawLabel(`${teeshot}m from tee`, clickPos.x + 10, clickPos.y + 18);
-  } else if (firstPoint) {
-    drawPoint(firstPoint, ballColor, 6);
-    drawPoint(clickPos, ballColor, 6);
-    drawLine(firstPoint, clickPos, 'rgba(0,0,0,0.85)', 1.8);
-    const distance = Math.round(getLength(firstPoint, clickPos));
-    drawLabel(`${distance}m`, clickPos.x + 10, clickPos.y + 10);
-    firstPoint = null;
+    drawLabel(`${approach}m`, clickPos.x + 10, clickPos.y);
+    drawLabel(`${teeshot}m`, clickPos.x + 10, clickPos.y + 18);
   } else {
+    if (firstPoint && firstPoint !== clickPos) drawPoint(firstPoint, ballColor, 6);
     drawPoint(clickPos, ballColor, 6);
-    firstPoint = clickPos;
+    if (firstPoint && firstPoint !== clickPos) {
+      drawLine(firstPoint, clickPos, 'rgba(0,0,0,0.85)', 1.8);
+      const distance = Math.round(getLength(firstPoint, clickPos));
+      drawLabel(`${distance}m`, clickPos.x + 10, clickPos.y + 10);
+    }
   }
 }
 
@@ -193,8 +197,8 @@ function redraw() {
 
 function getCanvasPoint(e) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
+  const scaleX = COORD_W / rect.width;
+  const scaleY = COORD_H / rect.height;
   const pt = e.touches ? e.touches[0] : e;
   return {
     x: (pt.clientX - rect.left) * scaleX,
@@ -205,13 +209,17 @@ function getCanvasPoint(e) {
 canvas.addEventListener('click', (e) => {
   const p = getCanvasPoint(e);
   if (measurementModeSwitch.checked) {
-    if (firstPoint) {
+    if (!firstPoint) {
+      // 1st click: mark first point, show it immediately.
+      firstPoint = p;
+      lastClick = p;
+    } else if (!lastClick || lastClick === firstPoint) {
+      // 2nd click: measure to first point.
       lastClick = p;
     } else {
+      // 3rd click: start a new measurement from this point.
       firstPoint = p;
-      lastClick = null;
-      redraw();
-      return;
+      lastClick = p;
     }
   } else {
     lastClick = p;
