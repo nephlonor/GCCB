@@ -8,16 +8,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=22">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=22">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=22">
+<link rel="manifest" href="manifest.webmanifest?v=23">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=23">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=23">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
     --bg: #0A2540;
-    --bg-elev: #07192e;
-    --bg-input: #051321;
-    --line: #15375a;
+    --bg-elev: #0e2c4d;
+    --bg-input: #0e2c4d;
+    --line: #1e406b;
     --text: #ffffff;
     --muted: #a8b6cc;
     --accent: #B3A16E;
@@ -270,6 +270,25 @@
     margin-left: 4px;
     white-space: nowrap;
   }
+  .hole-video {
+    padding: 0 12px 12px;
+  }
+  .hole-video .embed {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .hole-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
   .page-footer {
     text-align: center;
     color: var(--muted);
@@ -358,7 +377,7 @@
 <body>
 
 <header>
-  <img src="assets/logo.png?v=22" alt="GCCB">
+  <img src="assets/logo.png?v=23" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -401,20 +420,28 @@
   </aside>
 </div>
 
+<div class="hole-video">
+  <div class="embed">
+    <iframe id="holeVideo" src="" title="Hole video"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </div>
+</div>
+
 <div class="page-footer">
-  <img src="assets/logo.png?v=22" alt="GCCB">
+  <img src="assets/logo.png?v=23" alt="GCCB">
   © Florian Bertram 2026<br>
   Golf &amp; Country Club Basel
 </div>
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo.png?v=22" alt="GCCB">
+    <img src="assets/logo.png?v=23" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=22"></script>
+<script src="app.js?v=23"></script>
 </body>
 </html>
