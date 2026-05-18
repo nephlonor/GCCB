@@ -96,7 +96,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=6`;
+  bgImage.src = `holes/loch${n}.png?v=7`;
   redraw();
 }
 
@@ -171,7 +171,7 @@ function drawTeeAndGreen() {
 
 function updateDisplay() {
   const hole = HOLES[currentHole];
-  const ballColor = '#ffd54a';
+  const ballColor = TEE_COLORS[teeboxSelect.value] || '#ffd54a';
 
   if (!measurementModeSwitch.checked) {
     if (!lastClick) return;
