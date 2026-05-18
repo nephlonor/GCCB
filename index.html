@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=7">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=7">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=7">
+<link rel="manifest" href="manifest.webmanifest?v=8">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=8">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=8">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -207,7 +207,9 @@
   }
   .canvas-wrap {
     display: flex;
+    align-items: flex-start;
     justify-content: center;
+    gap: 14px;
     padding: 12px;
   }
   #canvas {
@@ -218,9 +220,44 @@
     height: auto;
     aspect-ratio: 210 / 700;
     display: block;
+    flex-shrink: 0;
     /* single-finger gestures handled in JS (drag); two-finger pinch
        still drives page zoom */
     touch-action: pinch-zoom;
+  }
+  .hole-info {
+    flex: 1;
+    max-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 2px;
+  }
+  .hole-info .row {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .hole-info .lbl {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .hole-info .val {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .hole-info .val .sub {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 4px;
   }
   .legend {
     display: flex;
@@ -298,7 +335,7 @@
 <body>
 
 <header>
-  <img src="assets/logo-white.png?v=7" alt="GCCB">
+  <img src="assets/logo-white.png?v=8" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -320,10 +357,10 @@
   <div>
     <label for="teeboxSelect">Teebox</label>
     <select id="teeboxSelect">
-      <option value="RED">RED</option>
-      <option value="BLUE">BLUE</option>
-      <option value="YELLOW">YELLOW</option>
-      <option value="WHITE" selected>WHITE</option>
+      <option value="RED">55 (RED)</option>
+      <option value="BLUE">58 (BLUE)</option>
+      <option value="YELLOW">62 (YELLOW)</option>
+      <option value="WHITE" selected>63 (WHITE)</option>
     </select>
   </div>
   <div class="mode-toggle">
@@ -338,6 +375,11 @@
 
 <div class="canvas-wrap">
   <canvas id="canvas" width="840" height="2800"></canvas>
+  <aside class="hole-info" id="holeInfo">
+    <div class="row"><span class="lbl">Par</span><span class="val" id="parVal">—</span></div>
+    <div class="row"><span class="lbl">HCP</span><span class="val" id="hcpVal">—</span></div>
+    <div class="row"><span class="lbl">Distance</span><span class="val"><span id="distVal">—</span><span class="sub" id="distTee"></span></span></div>
+  </aside>
 </div>
 
 <div class="legend">
@@ -350,12 +392,12 @@
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo-white.png?v=7" alt="GCCB">
+    <img src="assets/logo-white.png?v=8" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
