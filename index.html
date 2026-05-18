@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1a2362">
+<meta name="theme-color" content="#0A2540">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=20">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=20">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=20">
+<link rel="manifest" href="manifest.webmanifest?v=21">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=21">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=21">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
-    --bg: #1a2362;
-    --bg-elev: #232c75;
-    --bg-input: #2c3686;
-    --line: #3f4a96;
+    --bg: #0A2540;
+    --bg-elev: #143358;
+    --bg-input: #1c4170;
+    --line: #2b5184;
     --text: #ffffff;
-    --muted: #aeb5d8;
+    --muted: #a8b6cc;
     --accent: #c8a44a;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -41,7 +41,7 @@
     gap: 10px;
     padding: 10px 12px 6px;
   }
-  header img { height: 44px; width: auto; display: block; }
+  header img { height: 64px; width: auto; display: block; }
   header h1 {
     font-size: 16px;
     font-weight: 600;
@@ -118,18 +118,25 @@
   .hole-grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    gap: 4px;
+    gap: 6px;
     padding: 0 12px 10px;
+    justify-items: center;
   }
   .hole-grid button {
     background: var(--bg-input);
     color: var(--text);
     border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px 0;
+    border-radius: 50%;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 36px;
+    padding: 0;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .hole-grid button.active {
     background: var(--accent);
@@ -351,7 +358,7 @@
 <body>
 
 <header>
-  <img src="assets/logo.png?v=20" alt="GCCB">
+  <img src="assets/logo.png?v=21" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -395,19 +402,19 @@
 </div>
 
 <div class="page-footer">
-  <img src="assets/logo.png?v=20" alt="GCCB">
+  <img src="assets/logo.png?v=21" alt="GCCB">
   © Florian Bertram 2026<br>
   Golf &amp; Country Club Basel
 </div>
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo.png?v=20" alt="GCCB">
+    <img src="assets/logo.png?v=21" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>
