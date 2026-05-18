@@ -216,7 +216,7 @@
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 4px;
-    width: min(calc(100vw - 24px), 360px);
+    width: min(calc((100vw - 24px) / 2), 180px);
     height: auto;
     aspect-ratio: 210 / 700;
     display: block;
@@ -251,7 +251,6 @@
 
 <header>
   <img src="assets/logo-white.png" alt="GCCB">
-  <h1>Shot Tracker</h1>
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -290,7 +289,7 @@
 </div>
 
 <div class="canvas-wrap">
-  <canvas id="canvas" width="210" height="700"></canvas>
+  <canvas id="canvas" width="840" height="2800"></canvas>
 </div>
 
 <div class="legend">
