@@ -96,7 +96,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=4`;
+  bgImage.src = `holes/loch${n}.png?v=6`;
   redraw();
 }
 
@@ -337,3 +337,17 @@ nineTabs.querySelectorAll('button').forEach(b => {
 });
 
 loadHole(currentHole);
+
+// First-visit welcome popup. Persisted in localStorage so it only ever
+// shows once per device (until the user clears site data).
+(function () {
+  if (localStorage.getItem('gccb.seenWelcome')) return;
+  const modal = document.getElementById('welcomeModal');
+  const ok = document.getElementById('welcomeOk');
+  if (!modal || !ok) return;
+  modal.hidden = false;
+  ok.addEventListener('click', () => {
+    modal.hidden = true;
+    localStorage.setItem('gccb.seenWelcome', '1');
+  });
+})();
