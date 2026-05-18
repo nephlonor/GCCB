@@ -138,7 +138,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=20`;
+  bgImage.src = `holes/loch${n}.png?v=21`;
   updateHoleInfo();
   redraw();
 }
