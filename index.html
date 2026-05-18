@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=15">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=15">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=15">
+<link rel="manifest" href="manifest.webmanifest?v=16">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=16">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=16">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -165,6 +165,10 @@
   .info-row option[value="BLUE"] { color: #87CEFA; }
   .info-row option[value="YELLOW"] { color: gold; }
   .info-row option[value="WHITE"] { color: #fff; }
+  #teeboxSelect option[value="RED"] { color: #ff5252; }
+  #teeboxSelect option[value="BLUE"] { color: #87CEFA; }
+  #teeboxSelect option[value="YELLOW"] { color: gold; }
+  #teeboxSelect option[value="WHITE"] { color: #fff; }
   .mode-toggle {
     display: flex;
     align-items: center;
@@ -259,29 +263,35 @@
     font-weight: 500;
     margin-left: 4px;
   }
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 14px;
-    padding: 4px 12px 16px;
-    color: var(--muted);
-    font-size: 12px;
-    flex-wrap: wrap;
+  .hole-info .row.inline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
   }
-  .legend span::before {
-    content: "•";
-    margin-right: 4px;
-    font-size: 18px;
-    vertical-align: middle;
+  .hole-info select {
+    margin-top: 4px;
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
   }
-  .legend .tee-dot::before { color: #fff; text-shadow: 0 0 0 1px #000; }
-  .legend .green-dot::before { color: #2ecc71; }
-  .legend .ball-dot::before { color: var(--accent); }
+  .hole-info .clear-btn {
+    width: 100%;
+    margin-top: 2px;
+  }
   footer {
     text-align: center;
     color: var(--muted);
     font-size: 11px;
     padding: 6px 12px 16px;
+    line-height: 1.5;
   }
 
   /* First-visit welcome modal */
@@ -335,7 +345,7 @@
 <body>
 
 <header>
-  <img src="assets/logo-white.png?v=15" alt="GCCB">
+  <img src="assets/logo-white.png?v=16" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -353,51 +363,45 @@
   <button class="nav-btn" id="nextBtn">Next ›</button>
 </div>
 
-<div class="info-row">
-  <div>
-    <label for="teeboxSelect">Teebox</label>
-    <select id="teeboxSelect">
-      <option value="RED">53 (RED)</option>
-      <option value="BLUE">55 (BLUE)</option>
-      <option value="YELLOW">59 (YELLOW)</option>
-      <option value="WHITE" selected>62 (WHITE)</option>
-    </select>
-  </div>
-  <div class="mode-toggle">
-    <span>Point-to-point</span>
-    <label class="switch">
-      <input type="checkbox" id="measurementMode">
-      <span class="slider"></span>
-    </label>
-  </div>
-  <button class="clear-btn" id="clearBtn">Clear</button>
-</div>
-
 <div class="canvas-wrap">
   <canvas id="canvas" width="840" height="2800"></canvas>
   <aside class="hole-info" id="holeInfo">
     <div class="row"><span class="lbl">Par</span><span class="val" id="parVal">—</span></div>
     <div class="row"><span class="lbl">HCP</span><span class="val" id="hcpVal">—</span></div>
     <div class="row"><span class="lbl">Distance</span><span class="val"><span id="distVal">—</span><span class="sub" id="distTee"></span></span></div>
+    <div class="row">
+      <label class="lbl" for="teeboxSelect">Teebox</label>
+      <select id="teeboxSelect">
+        <option value="RED">53 (RED)</option>
+        <option value="BLUE">55 (BLUE)</option>
+        <option value="YELLOW">59 (YELLOW)</option>
+        <option value="WHITE" selected>62 (WHITE)</option>
+      </select>
+    </div>
+    <div class="row inline">
+      <span class="lbl">Point-to-point</span>
+      <label class="switch">
+        <input type="checkbox" id="measurementMode">
+        <span class="slider round"></span>
+      </label>
+    </div>
+    <button class="clear-btn" id="clearBtn">Clear</button>
   </aside>
 </div>
 
-<div class="legend">
-  <span class="tee-dot">Tee</span>
-  <span class="green-dot">Green</span>
-  <span class="ball-dot">Your shot</span>
-</div>
-
-<footer>Golf &amp; Country Club Basel</footer>
+<footer>
+  © Florian Bertram 2026<br>
+  Golf &amp; Country Club Basel
+</footer>
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo-white.png?v=15" alt="GCCB">
+    <img src="assets/logo-white.png?v=16" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
