@@ -6,7 +6,7 @@
 // distances read to roughly the middle/pin. Par 3 markers are already
 // at the middle, so their values match the scorecard.
 const HOLES = {
-  1:  { green: {x:114, y:77},  tees: { WHITE:{x:102,y:656}, YELLOW:{x:100,y:636}, BLUE:{x:98,y:615},  RED:{x:98,y:600}  }, holeLength: 327, pixelLength: 578 },
+  1:  { green: {x:114, y:77},  tees: { WHITE:{x:102,y:656}, YELLOW:{x:100,y:636}, BLUE:{x:98,y:615},  RED:{x:98,y:600}  }, holeLength: 335, pixelLength: 578 }, // +20: extra-long green
   2:  { green: {x:104, y:70},  tees: { WHITE:{x:80, y:657}, YELLOW:{x:82, y:639}, BLUE:{x:86, y:614}, RED:{x:91, y:587} }, holeLength: 459, pixelLength: 603 },
   3:  { green: {x:121, y:121}, tees: { WHITE:{x:90, y:578}, YELLOW:{x:93, y:556}, BLUE:{x:103,y:494}, RED:{x:83, y:456} }, holeLength: 203, pixelLength: 458 },
   4:  { green: {x:135, y:55},  tees: { WHITE:{x:127,y:650}, YELLOW:{x:120,y:630}, BLUE:{x:98, y:573}, RED:{x:98, y:573} }, holeLength: 409, pixelLength: 614 },
@@ -140,7 +140,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=13`;
+  bgImage.src = `holes/loch${n}.png?v=14`;
   updateHoleInfo();
   redraw();
 }
