@@ -64,14 +64,11 @@ function updateHoleInfo() {
   const parEl = document.getElementById('parVal');
   const hcpEl = document.getElementById('hcpVal');
   const distEl = document.getElementById('distVal');
-  const teeEl = document.getElementById('distTee');
   if (!info || !parEl) return;
   parEl.textContent = info.par == null ? '—' : info.par;
   hcpEl.textContent = info.hcp == null ? '—' : info.hcp;
-  const tee = teeboxSelect.value;
-  const d = info.dist[tee];
-  distEl.textContent = d == null ? '—' : `${d}m`;
-  teeEl.textContent = `· ${TEE_NUMBERS[tee]} (${tee})`;
+  const d = info.dist[teeboxSelect.value];
+  distEl.textContent = d == null ? '—' : d;
 }
 
 const canvas = document.getElementById('canvas');
@@ -141,7 +138,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=17`;
+  bgImage.src = `holes/loch${n}.png?v=18`;
   updateHoleInfo();
   redraw();
 }

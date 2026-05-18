@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=17">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=17">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=17">
+<link rel="manifest" href="manifest.webmanifest?v=18">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=18">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=18">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -256,13 +256,18 @@
     font-weight: 700;
     line-height: 1;
   }
-  .hole-info .distance .val { font-size: 38px; }
   .hole-info .val .sub {
     color: var(--muted);
     font-size: 12px;
     font-weight: 500;
     margin-left: 4px;
     white-space: nowrap;
+  }
+  .hole-info .credits {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
   }
   .hole-info .row.inline {
     align-items: center;
@@ -339,7 +344,7 @@
 <body>
 
 <header>
-  <img src="assets/logo-white.png?v=17" alt="GCCB">
+  <img src="assets/logo-white.png?v=18" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -361,7 +366,7 @@
   <canvas id="canvas" width="840" height="2800"></canvas>
   <aside class="hole-info" id="holeInfo">
     <div class="row"><span class="lbl">Par</span><span class="val" id="parVal">—</span></div>
-    <div class="row distance"><span class="val"><span id="distVal">—</span><span class="sub" id="distTee"></span></span></div>
+    <div class="row"><span class="lbl">Meters</span><span class="val" id="distVal">—</span></div>
     <div class="row"><span class="lbl">HCP</span><span class="val" id="hcpVal">—</span></div>
     <div class="row inline">
       <span class="lbl">Point-to-point</span>
@@ -379,22 +384,21 @@
         <option value="WHITE" selected>62 (WHITE)</option>
       </select>
     </div>
+    <div class="credits">
+      © Florian Bertram 2026<br>
+      Golf &amp; Country Club Basel
+    </div>
   </aside>
 </div>
 
-<footer>
-  © Florian Bertram 2026<br>
-  Golf &amp; Country Club Basel
-</footer>
-
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo-white.png?v=17" alt="GCCB">
+    <img src="assets/logo-white.png?v=18" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>
