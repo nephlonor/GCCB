@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=16">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=16">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=16">
+<link rel="manifest" href="manifest.webmanifest?v=17">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=17">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=17">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -234,57 +234,51 @@
     max-width: 180px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-top: 2px;
+    gap: 18px;
+    padding-top: 4px;
   }
   .hole-info .row {
     display: flex;
-    flex-direction: column;
-    background: var(--bg-elev);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 8px 10px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
   }
   .hole-info .lbl {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 600;
   }
   .hole-info .val {
     color: var(--text);
-    font-size: 18px;
+    font-size: 30px;
     font-weight: 700;
-    margin-top: 2px;
+    line-height: 1;
   }
+  .hole-info .distance .val { font-size: 38px; }
   .hole-info .val .sub {
     color: var(--muted);
     font-size: 12px;
     font-weight: 500;
     margin-left: 4px;
+    white-space: nowrap;
   }
   .hole-info .row.inline {
-    flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
   }
   .hole-info select {
-    margin-top: 4px;
-    background: var(--bg-input);
+    background: transparent;
     color: var(--text);
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 6px 10px;
+    padding: 4px 8px;
     font-size: 14px;
     font-weight: 600;
     appearance: none;
     -webkit-appearance: none;
-    width: 100%;
-  }
-  .hole-info .clear-btn {
-    width: 100%;
-    margin-top: 2px;
   }
   footer {
     text-align: center;
@@ -345,7 +339,7 @@
 <body>
 
 <header>
-  <img src="assets/logo-white.png?v=16" alt="GCCB">
+  <img src="assets/logo-white.png?v=17" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -367,9 +361,16 @@
   <canvas id="canvas" width="840" height="2800"></canvas>
   <aside class="hole-info" id="holeInfo">
     <div class="row"><span class="lbl">Par</span><span class="val" id="parVal">—</span></div>
+    <div class="row distance"><span class="val"><span id="distVal">—</span><span class="sub" id="distTee"></span></span></div>
     <div class="row"><span class="lbl">HCP</span><span class="val" id="hcpVal">—</span></div>
-    <div class="row"><span class="lbl">Distance</span><span class="val"><span id="distVal">—</span><span class="sub" id="distTee"></span></span></div>
-    <div class="row">
+    <div class="row inline">
+      <span class="lbl">Point-to-point</span>
+      <label class="switch">
+        <input type="checkbox" id="measurementMode">
+        <span class="slider round"></span>
+      </label>
+    </div>
+    <div class="row inline">
       <label class="lbl" for="teeboxSelect">Teebox</label>
       <select id="teeboxSelect">
         <option value="RED">53 (RED)</option>
@@ -378,14 +379,6 @@
         <option value="WHITE" selected>62 (WHITE)</option>
       </select>
     </div>
-    <div class="row inline">
-      <span class="lbl">Point-to-point</span>
-      <label class="switch">
-        <input type="checkbox" id="measurementMode">
-        <span class="slider round"></span>
-      </label>
-    </div>
-    <button class="clear-btn" id="clearBtn">Clear</button>
   </aside>
 </div>
 
@@ -396,12 +389,12 @@
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo-white.png?v=16" alt="GCCB">
+    <img src="assets/logo-white.png?v=17" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=16"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
