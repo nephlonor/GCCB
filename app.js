@@ -28,6 +28,49 @@ const TEE_COLORS = {
   RED:    '#ff3b30',
 };
 
+// Per-hole info shown in the side panel. The WHITE distances come from
+// the source HTMLs; par/HCP and other-teebox distances need to be
+// filled in from the club scorecard (the gccbasel.ch site is blocked
+// from this build environment).
+//   tee number -> color: 55=RED, 58=BLUE, 62=YELLOW, 63=WHITE
+const HOLE_INFO = {
+  1:  { par: 4, hcp: 16, dist: { WHITE: 315, YELLOW: null, BLUE: null, RED: null } },
+  2:  { par: null, hcp: null, dist: { WHITE: 447, YELLOW: null, BLUE: null, RED: null } },
+  3:  { par: null, hcp: null, dist: { WHITE: 203, YELLOW: null, BLUE: null, RED: null } },
+  4:  { par: null, hcp: null, dist: { WHITE: 397, YELLOW: null, BLUE: null, RED: null } },
+  5:  { par: null, hcp: null, dist: { WHITE: 381, YELLOW: null, BLUE: null, RED: null } },
+  6:  { par: null, hcp: null, dist: { WHITE: 510, YELLOW: null, BLUE: null, RED: null } },
+  7:  { par: null, hcp: null, dist: { WHITE: 131, YELLOW: null, BLUE: null, RED: null } },
+  8:  { par: null, hcp: null, dist: { WHITE: 355, YELLOW: null, BLUE: null, RED: null } },
+  9:  { par: null, hcp: null, dist: { WHITE: 315, YELLOW: null, BLUE: null, RED: null } },
+  10: { par: null, hcp: null, dist: { WHITE: 454, YELLOW: null, BLUE: null, RED: null } },
+  11: { par: null, hcp: null, dist: { WHITE: 185, YELLOW: null, BLUE: null, RED: null } },
+  12: { par: null, hcp: null, dist: { WHITE: 350, YELLOW: null, BLUE: null, RED: null } },
+  13: { par: null, hcp: null, dist: { WHITE: 387, YELLOW: null, BLUE: null, RED: null } },
+  14: { par: null, hcp: null, dist: { WHITE: 386, YELLOW: null, BLUE: null, RED: null } },
+  15: { par: null, hcp: null, dist: { WHITE: 302, YELLOW: null, BLUE: null, RED: null } },
+  16: { par: null, hcp: null, dist: { WHITE: 167, YELLOW: null, BLUE: null, RED: null } },
+  17: { par: null, hcp: null, dist: { WHITE: 415, YELLOW: null, BLUE: null, RED: null } },
+  18: { par: null, hcp: null, dist: { WHITE: 549, YELLOW: null, BLUE: null, RED: null } },
+};
+
+const TEE_NUMBERS = { WHITE: 63, YELLOW: 62, BLUE: 58, RED: 55 };
+
+function updateHoleInfo() {
+  const info = HOLE_INFO[currentHole];
+  const parEl = document.getElementById('parVal');
+  const hcpEl = document.getElementById('hcpVal');
+  const distEl = document.getElementById('distVal');
+  const teeEl = document.getElementById('distTee');
+  if (!info || !parEl) return;
+  parEl.textContent = info.par == null ? '—' : info.par;
+  hcpEl.textContent = info.hcp == null ? '—' : info.hcp;
+  const tee = teeboxSelect.value;
+  const d = info.dist[tee];
+  distEl.textContent = d == null ? '—' : `${d}m`;
+  teeEl.textContent = `· ${TEE_NUMBERS[tee]} (${tee})`;
+}
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 // Hole coordinates were authored for a 210x700 canvas. The canvas
@@ -96,7 +139,8 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=7`;
+  bgImage.src = `holes/loch${n}.png?v=8`;
+  updateHoleInfo();
   redraw();
 }
 
@@ -316,7 +360,7 @@ canvas.addEventListener('pointercancel', (e) => {
 holeSelect.addEventListener('change', () => selectHole(parseInt(holeSelect.value)));
 prevBtn.addEventListener('click', () => selectHole(currentHole - 1));
 nextBtn.addEventListener('click', () => selectHole(currentHole + 1));
-teeboxSelect.addEventListener('change', redraw);
+teeboxSelect.addEventListener('change', () => { updateHoleInfo(); redraw(); });
 measurementModeSwitch.addEventListener('change', () => {
   firstPoint = null;
   lastClick = null;
