@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a2540">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GCCB">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<title>GCCB Shot Tracker</title>
+<style>
+  :root {
+    --bg: #0a2540;
+    --bg-elev: #102e52;
+    --bg-input: #1a3d66;
+    --line: #1f4d7a;
+    --text: #ffffff;
+    --muted: #b9c8db;
+    --accent: #ffd54a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overscroll-behavior: none;
+  }
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    min-height: 100vh;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px 6px;
+  }
+  header img { height: 36px; width: auto; display: block; }
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+  .hole-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    overflow: hidden;
+  }
+  .nav-btn {
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .nav-btn:active { background: var(--line); }
+  .nav-btn:disabled { opacity: 0.35; }
+  .hole-select-wrap {
+    flex: 1;
+    position: relative;
+  }
+  select#holeSelect {
+    width: 100%;
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 32px 10px 12px;
+    font-size: 15px;
+    font-weight: 600;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: center;
+    text-align-last: center;
+  }
+  .hole-select-wrap::after {
+    content: "▾";
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .nine-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 0 12px 8px;
+  }
+  .nine-tabs button {
+    flex: 1;
+    background: var(--bg-input);
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .nine-tabs button.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .hole-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px;
+    padding: 0 12px 10px;
+  }
+  .hole-grid button {
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .hole-grid button.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-elev);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .info-row label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+  .info-row select {
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .info-row option[value="RED"] { color: #ff5252; }
+  .info-row option[value="BLUE"] { color: #87CEFA; }
+  .info-row option[value="YELLOW"] { color: gold; }
+  .info-row option[value="WHITE"] { color: #fff; }
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0;
+    background: #4a6789;
+    border-radius: 26px;
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  .slider:before {
+    content: "";
+    position: absolute;
+    left: 3px; bottom: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  input:checked + .slider { background: var(--accent); }
+  input:checked + .slider:before { transform: translateX(20px); }
+  .clear-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .canvas-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    touch-action: manipulation;
+  }
+  #canvas {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    width: min(calc(100vw - 24px), 360px);
+    height: auto;
+    aspect-ratio: 210 / 700;
+    display: block;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    padding: 4px 12px 16px;
+    color: var(--muted);
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .legend span::before {
+    content: "•";
+    margin-right: 4px;
+    font-size: 18px;
+    vertical-align: middle;
+  }
+  .legend .tee-dot::before { color: #fff; text-shadow: 0 0 0 1px #000; }
+  .legend .green-dot::before { color: #2ecc71; }
+  .legend .ball-dot::before { color: var(--accent); }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 6px 12px 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="assets/logo-white.png" alt="GCCB">
+  <h1>Shot Tracker</h1>
+</header>
+
+<div class="nine-tabs" id="nineTabs">
+  <button data-nine="front" class="active">Front 9 (1–9)</button>
+  <button data-nine="back">Back 9 (10–18)</button>
+</div>
+
+<div class="hole-grid" id="holeGrid"></div>
+
+<div class="hole-bar">
+  <button class="nav-btn" id="prevBtn">‹ Prev</button>
+  <div class="hole-select-wrap">
+    <select id="holeSelect"></select>
+  </div>
+  <button class="nav-btn" id="nextBtn">Next ›</button>
+</div>
+
+<div class="info-row">
+  <div>
+    <label for="teeboxSelect">Teebox</label>
+    <select id="teeboxSelect">
+      <option value="RED">RED</option>
+      <option value="BLUE">BLUE</option>
+      <option value="YELLOW">YELLOW</option>
+      <option value="WHITE" selected>WHITE</option>
+    </select>
+  </div>
+  <div class="mode-toggle">
+    <span>Point-to-point</span>
+    <label class="switch">
+      <input type="checkbox" id="measurementMode">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <button class="clear-btn" id="clearBtn">Clear</button>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="canvas" width="210" height="700"></canvas>
+</div>
+
+<div class="legend">
+  <span class="tee-dot">Tee</span>
+  <span class="green-dot">Green</span>
+  <span class="ball-dot">Your shot</span>
+</div>
+
+<footer>Golf &amp; Country Club Basel</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
