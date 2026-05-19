@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=25">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=25">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=25">
+<link rel="manifest" href="manifest.webmanifest?v=26">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=26">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=26">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -316,6 +316,27 @@
     appearance: none;
     -webkit-appearance: none;
   }
+  .hole-info .notes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  .hole-info textarea {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 14px;
+    font-family: inherit;
+    line-height: 1.35;
+    width: 100%;
+    resize: vertical;
+    min-height: 64px;
+    outline: none;
+  }
+  .hole-info textarea:focus { border-color: var(--accent); }
+  .hole-info textarea::placeholder { color: var(--muted); opacity: 0.6; }
   footer {
     text-align: center;
     color: var(--muted);
@@ -375,7 +396,7 @@
 <body>
 
 <header>
-  <img src="assets/logo.png?v=25" alt="GCCB">
+  <img src="assets/logo.png?v=26" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -414,6 +435,10 @@
         <option value="WHITE" selected>62 (WHITE)</option>
       </select>
     </div>
+    <div class="row notes">
+      <label class="lbl" for="notesArea">Notes</label>
+      <textarea id="notesArea" rows="4" placeholder="…"></textarea>
+    </div>
   </aside>
 </div>
 
@@ -426,7 +451,7 @@
 </div>
 
 <div class="page-footer">
-  <img src="assets/logo.png?v=25" alt="GCCB">
+  <img src="assets/logo.png?v=26" alt="GCCB">
   © Golf &amp; Country Club Basel<br>
   by Florian Bertram<br>
   2026
@@ -434,12 +459,12 @@
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo.png?v=25" alt="GCCB">
+    <img src="assets/logo.png?v=26" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=25"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>
