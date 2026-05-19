@@ -117,6 +117,47 @@ let bgLoaded = false;
 let lastClick = null;
 let firstPoint = null;
 
+// Per-hole persisted state (markers + notes), keyed by hole number.
+//   normal: ball position when point-to-point is off
+//   p2pA / p2pB: first / second points when point-to-point is on
+//   notes: free-text notes shown in the right panel
+const STATE_KEY = 'gccb.state.v1';
+let allState = {};
+try { allState = JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch {}
+
+const notesArea = document.getElementById('notesArea');
+
+function holeSlot(n) {
+  if (!allState[n]) allState[n] = { normal: null, p2pA: null, p2pB: null, notes: '' };
+  return allState[n];
+}
+
+function saveState() {
+  localStorage.setItem(STATE_KEY, JSON.stringify(allState));
+}
+
+function captureToSlot() {
+  const slot = holeSlot(currentHole);
+  if (measurementModeSwitch.checked) {
+    slot.p2pA = firstPoint;
+    slot.p2pB = lastClick;
+  } else {
+    slot.normal = lastClick;
+  }
+  saveState();
+}
+
+function restoreFromSlot() {
+  const slot = holeSlot(currentHole);
+  if (measurementModeSwitch.checked) {
+    firstPoint = slot.p2pA;
+    lastClick = slot.p2pB;
+  } else {
+    firstPoint = null;
+    lastClick = slot.normal;
+  }
+}
+
 // Build hole dropdown
 for (let i = 1; i <= 18; i++) {
   const opt = document.createElement('option');
@@ -154,13 +195,13 @@ function loadHole(n) {
   prevBtn.disabled = (n === 1);
   nextBtn.disabled = (n === 18);
 
-  lastClick = null;
-  firstPoint = null;
+  restoreFromSlot();
+  if (notesArea) notesArea.value = holeSlot(currentHole).notes || '';
   bgLoaded = false;
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=25`;
+  bgImage.src = `holes/loch${n}.png?v=26`;
   updateHoleInfo();
   updateHoleVideo();
   redraw();
@@ -316,6 +357,7 @@ function placeTap(p) {
   } else {
     lastClick = p;
   }
+  captureToSlot();
   redraw();
 }
 
@@ -370,7 +412,7 @@ function endPointer(e) {
   const dist = Math.hypot(dx, dy);
   const dt = Date.now() - downAt.time;
   downAt = null;
-  if (wasDrag) return;
+  if (wasDrag) { captureToSlot(); return; }
   if (!moved && dist < 10 && dt < 500) {
     placeTap(getCanvasPoint(e));
     return;
@@ -394,8 +436,19 @@ prevBtn.addEventListener('click', () => selectHole(currentHole - 1));
 nextBtn.addEventListener('click', () => selectHole(currentHole + 1));
 teeboxSelect.addEventListener('change', () => { updateHoleInfo(); redraw(); });
 measurementModeSwitch.addEventListener('change', () => {
-  firstPoint = null;
-  lastClick = null;
+  // Toggle just flipped. Save the *previous* mode's positions into
+  // its slot, then restore the new mode's saved positions so that
+  // each mode remembers its own last marker(s).
+  const slot = holeSlot(currentHole);
+  const nowP2P = measurementModeSwitch.checked;
+  if (nowP2P) {
+    slot.normal = lastClick;
+  } else {
+    slot.p2pA = firstPoint;
+    slot.p2pB = lastClick;
+  }
+  saveState();
+  restoreFromSlot();
   redraw();
 });
 
@@ -406,6 +459,13 @@ nineTabs.querySelectorAll('button').forEach(b => {
     buildHoleGrid();
   });
 });
+
+if (notesArea) {
+  notesArea.addEventListener('input', () => {
+    holeSlot(currentHole).notes = notesArea.value;
+    saveState();
+  });
+}
 
 loadHole(currentHole);
 
