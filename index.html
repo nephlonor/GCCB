@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=23">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=23">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=23">
+<link rel="manifest" href="manifest.webmanifest?v=24">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=24">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=24">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -48,48 +48,46 @@
     margin: 0;
     letter-spacing: 0.5px;
   }
-  .hole-bar {
+  .hole-nav {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    overflow: hidden;
+    gap: 6px;
+    margin-bottom: 4px;
   }
-  .nav-btn {
-    background: var(--bg-input);
+  .hole-nav-btn {
+    background: none;
+    border: none;
     color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 700;
+    padding: 0 6px;
     cursor: pointer;
     flex-shrink: 0;
   }
-  .nav-btn:active { background: var(--line); }
-  .nav-btn:disabled { opacity: 0.35; }
+  .hole-nav-btn:disabled { opacity: 0.3; }
   .hole-select-wrap {
     flex: 1;
     position: relative;
   }
   select#holeSelect {
     width: 100%;
-    background: var(--bg-input);
+    background: transparent;
     color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 32px 10px 12px;
-    font-size: 15px;
-    font-weight: 600;
+    border: none;
+    padding: 0 14px 0 0;
+    font-size: 22px;
+    font-weight: 700;
     appearance: none;
     -webkit-appearance: none;
     text-align: center;
     text-align-last: center;
+    line-height: 1;
   }
   .hole-select-wrap::after {
     content: "▾";
     position: absolute;
-    right: 12px; top: 50%;
+    right: 0; top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
     color: var(--muted);
@@ -377,7 +375,7 @@
 <body>
 
 <header>
-  <img src="assets/logo.png?v=23" alt="GCCB">
+  <img src="assets/logo.png?v=24" alt="GCCB">
 </header>
 
 <div class="nine-tabs" id="nineTabs">
@@ -387,17 +385,16 @@
 
 <div class="hole-grid" id="holeGrid"></div>
 
-<div class="hole-bar">
-  <button class="nav-btn" id="prevBtn">‹ Prev</button>
-  <div class="hole-select-wrap">
-    <select id="holeSelect"></select>
-  </div>
-  <button class="nav-btn" id="nextBtn">Next ›</button>
-</div>
-
 <div class="canvas-wrap">
   <canvas id="canvas" width="840" height="2800"></canvas>
   <aside class="hole-info" id="holeInfo">
+    <div class="hole-nav">
+      <button class="hole-nav-btn" id="prevBtn" aria-label="Previous hole">‹</button>
+      <div class="hole-select-wrap">
+        <select id="holeSelect"></select>
+      </div>
+      <button class="hole-nav-btn" id="nextBtn" aria-label="Next hole">›</button>
+    </div>
     <div class="row"><span class="lbl">Par</span><span class="val" id="parVal">—</span></div>
     <div class="row"><span class="lbl">Meters</span><span class="val" id="distVal">—</span></div>
     <div class="row"><span class="lbl">HCP</span><span class="val" id="hcpVal">—</span></div>
@@ -429,19 +426,19 @@
 </div>
 
 <div class="page-footer">
-  <img src="assets/logo.png?v=23" alt="GCCB">
+  <img src="assets/logo.png?v=24" alt="GCCB">
   © Florian Bertram 2026<br>
   Golf &amp; Country Club Basel
 </div>
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo.png?v=23" alt="GCCB">
+    <img src="assets/logo.png?v=24" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=23"></script>
+<script src="app.js?v=24"></script>
 </body>
 </html>

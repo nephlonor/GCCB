@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/golf-shot-tracker-app-BzEOh
   workflow_dispatch:
 
 permissions:
