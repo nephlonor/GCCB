@@ -201,7 +201,7 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=27`;
+  bgImage.src = `holes/loch${n}.png?v=28`;
   updateHoleInfo();
   updateHoleVideo();
   redraw();
@@ -481,4 +481,66 @@ loadHole(currentHole);
     modal.hidden = true;
     localStorage.setItem('gccb.seenWelcome', '1');
   });
+})();
+
+// "Install app" prompt.
+// - Chromium / Edge: capture beforeinstallprompt, show a real Install
+//   button that triggers the browser's native dialog.
+// - iOS Safari (and Chrome on iOS, which is just Safari): show
+//   instructions to use Share -> Add to Home Screen.
+// - Already installed (standalone display mode) or previously
+//   dismissed: stay hidden.
+(function () {
+  const prompt = document.getElementById('installPrompt');
+  const btn = document.getElementById('installBtn');
+  const dismiss = document.getElementById('installDismiss');
+  const msg = document.getElementById('installMsg');
+  if (!prompt || !btn || !dismiss || !msg) return;
+
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+  if (isStandalone) return;
+  if (localStorage.getItem('gccb.installDismissed')) return;
+
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+  function show(html, withBtn) {
+    msg.innerHTML = html;
+    btn.hidden = !withBtn;
+    prompt.hidden = false;
+  }
+  function hide() { prompt.hidden = true; }
+
+  dismiss.addEventListener('click', () => {
+    hide();
+    localStorage.setItem('gccb.installDismissed', '1');
+  });
+
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferred = e;
+    show('<b>Install app</b> for the full-screen experience.', true);
+  });
+
+  btn.addEventListener('click', async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    try { await deferred.userChoice; } catch {}
+    deferred = null;
+    hide();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferred = null;
+    hide();
+    localStorage.setItem('gccb.installDismissed', '1');
+  });
+
+  if (isIOS) {
+    // iOS Safari never fires beforeinstallprompt; show manual hint.
+    show('Install: tap <b>Share</b> &rarr; <b>Add to Home Screen</b>.', false);
+  }
 })();

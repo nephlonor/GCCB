@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=27">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=27">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=27">
+<link rel="manifest" href="manifest.webmanifest?v=28">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=28">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=28">
 <title>GCCB Shot Tracker</title>
 <style>
   :root {
@@ -42,6 +42,45 @@
     padding: 10px 12px 6px;
   }
   header img { height: 64px; width: auto; display: block; }
+
+  /* Install / Add-to-Home-Screen prompt */
+  #installPrompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 12px 8px;
+    padding: 8px 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  #installPrompt[hidden] { display: none; }
+  #installPrompt .msg { flex: 1; line-height: 1.35; }
+  #installPrompt .msg b { color: var(--text); font-weight: 700; }
+  #installPrompt #installBtn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #installPrompt #installDismiss {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
   header h1 {
     font-size: 16px;
     font-weight: 600;
@@ -399,8 +438,14 @@
 <body>
 
 <header>
-  <img src="assets/logo.png?v=27" alt="GCCB">
+  <img src="assets/logo.png?v=28" alt="GCCB">
 </header>
+
+<div id="installPrompt" hidden>
+  <span class="msg" id="installMsg"></span>
+  <button id="installBtn" type="button" hidden>Install</button>
+  <button id="installDismiss" type="button" aria-label="Dismiss">×</button>
+</div>
 
 <div class="nine-tabs" id="nineTabs">
   <button data-nine="front" class="active">Front 9 (1–9)</button>
@@ -454,7 +499,7 @@
 </div>
 
 <div class="page-footer">
-  <img src="assets/logo.png?v=27" alt="GCCB">
+  <img src="assets/logo.png?v=28" alt="GCCB">
   © Golf &amp; Country Club Basel<br>
   by Florian Bertram<br>
   2026
@@ -462,12 +507,12 @@
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo.png?v=27" alt="GCCB">
+    <img src="assets/logo.png?v=28" alt="GCCB">
     <p id="welcomeText">Welcome! Tap on the fairway to see the distance from the selected teebox and distance to the green</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<script src="app.js?v=27"></script>
+<script src="app.js?v=28"></script>
 </body>
 </html>
