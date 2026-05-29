@@ -8,16 +8,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCCB">
-<link rel="manifest" href="manifest.webmanifest?v=32">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=32">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=32">
+<link rel="manifest" href="manifest.webmanifest?v=33">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=33">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=33">
 <title>GCCB Shot Tracker</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin="" defer></script>
 <style>
   :root {
     --bg: #0A2540;
@@ -406,6 +400,7 @@
     font-size: 13px;
     color: var(--muted);
   }
+  .gps-bar[hidden] { display: none; }
   .gps-bar .gps-row {
     display: flex;
     align-items: center;
@@ -466,120 +461,6 @@
     margin-top: 1px;
   }
 
-  /* Calibration modal */
-  #calModal {
-    position: fixed;
-    inset: 0;
-    background: rgba(10, 37, 64, 0.92);
-    z-index: 1100;
-    display: flex;
-    flex-direction: column;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-  #calModal[hidden] { display: none; }
-  #calModal .cal-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--line);
-  }
-  #calModal h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    flex: 1;
-  }
-  #calModal .cal-header select {
-    background: var(--bg-input);
-    color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  #calModal button.icon {
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  #calModal .cal-body {
-    flex: 1;
-    position: relative;
-    min-height: 200px;
-  }
-  #calMap {
-    position: absolute;
-    inset: 0;
-  }
-  #calModal .cal-help {
-    padding: 8px 12px;
-    background: var(--bg-elev);
-    border-bottom: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.4;
-  }
-  #calModal .cal-help b { color: var(--text); }
-  #calModal .cal-footer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
-    border-top: 1px solid var(--line);
-    background: var(--bg-elev);
-  }
-  #calModal .cal-footer button {
-    flex: 1 1 auto;
-    background: var(--bg-input);
-    color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    min-width: 120px;
-  }
-  #calModal .cal-footer button.primary {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-  }
-  #calModal .cal-footer button.danger {
-    color: #ff6b6b;
-  }
-  .cal-pin {
-    pointer-events: auto;
-  }
-  .cal-pin-dot {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid #000;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  }
-  .cal-pin-label {
-    position: absolute;
-    top: 22px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.78);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 4px;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
   /* First-visit welcome modal */
   #welcomeModal {
     position: fixed;
@@ -631,10 +512,10 @@
 <body>
 
 <header>
-  <img src="assets/logo.png?v=32" alt="GCCB">
+  <img src="assets/logo.png?v=33" alt="GCCB">
 </header>
 
-<div class="gps-bar">
+<div class="gps-bar" hidden>
   <div class="mode-toggle-group" role="group" aria-label="Mode">
     <button type="button" id="modePlannerBtn" class="active" data-mode="planner">
       Shot planner<span class="sub">no GPS</span>
@@ -646,7 +527,6 @@
   <div class="gps-row">
     <span class="gps-status" id="gpsStatus">Shot planner mode</span>
     <button class="aux" id="gpsRefreshBtn" type="button" title="Refresh GPS now" aria-label="Refresh GPS">↻</button>
-    <button class="aux" id="calibrateBtn" type="button">Map</button>
   </div>
 </div>
 
@@ -708,7 +588,7 @@
 </div>
 
 <div class="page-footer">
-  <img src="assets/logo.png?v=32" alt="GCCB">
+  <img src="assets/logo.png?v=33" alt="GCCB">
   © Golf &amp; Country Club Basel<br>
   by Florian Bertram<br>
   2026
@@ -716,32 +596,12 @@
 
 <div id="welcomeModal" hidden role="dialog" aria-modal="true" aria-labelledby="welcomeText">
   <div class="modal-card">
-    <img src="assets/logo.png?v=32" alt="GCCB">
-    <p id="welcomeText">The mode switches automatically: <b>Live location</b> when your GPS dot is on the hole you're viewing, <b>Shot planner</b> otherwise (tap to measure). <b>Map</b> lets you nudge any hole's calibration pins.</p>
+    <img src="assets/logo.png?v=33" alt="GCCB">
+    <p id="welcomeText">The mode switches automatically: <b>Live location</b> when your GPS dot is on the hole you're viewing, <b>Shot planner</b> otherwise (tap to measure).</p>
     <button id="welcomeOk" type="button">Got it</button>
   </div>
 </div>
 
-<div id="calModal" hidden role="dialog" aria-modal="true" aria-label="OSM calibration">
-  <div class="cal-header">
-    <h2>Map calibration</h2>
-    <select id="calHoleSelect" aria-label="Hole"></select>
-    <button id="calCloseBtn" class="icon" type="button" aria-label="Close">✕</button>
-  </div>
-  <div class="cal-help">
-    Drag the <b>green</b> pin onto the middle of the green and the <b>white</b> pin onto the white teebox of the selected hole. Save to lock in the mapping for that hole.
-  </div>
-  <div class="cal-body">
-    <div id="calMap"></div>
-  </div>
-  <div class="cal-footer">
-    <button id="calUseGpsGreen" type="button">Green = my GPS</button>
-    <button id="calUseGpsWhite" type="button">White tee = my GPS</button>
-    <button id="calClearBtn" class="danger" type="button">Clear hole</button>
-    <button id="calSaveBtn" class="primary" type="button">Save</button>
-  </div>
-</div>
-
-<script src="app.js?v=32"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>
