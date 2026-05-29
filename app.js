@@ -201,9 +201,13 @@ function loadHole(n) {
   bgImage = new Image();
   bgImage.onload = () => { bgLoaded = true; redraw(); };
   bgImage.onerror = () => { bgLoaded = false; redraw(); };
-  bgImage.src = `holes/loch${n}.png?v=28`;
+  bgImage.src = `holes/loch${n}.png?v=32`;
   updateHoleInfo();
   updateHoleVideo();
+  // The blue-dot-in-frame check is hole-specific, so re-derive on
+  // every hole change.
+  autoUpdateMode();
+  updateGpsStatus();
   redraw();
 }
 
@@ -291,13 +295,17 @@ function updateDisplay() {
   const ballColor = TEE_COLORS[teeboxSelect.value] || '#ffd54a';
 
   if (!measurementModeSwitch.checked) {
-    if (!lastClick) return;
+    // In Live mode the ball follows the live GPS dot whenever it's
+    // visible (in range + hole calibrated). Saved tap is preserved
+    // for when the user switches back to Shot planner.
+    const ball = liveBallPos() || lastClick;
+    if (!ball) return;
     const tee = hole.tees[teeboxSelect.value];
-    drawLine(tee, lastClick, 'rgba(0,0,0,0.85)', 2.5);
-    drawLine(hole.green, lastClick, 'rgba(0,0,0,0.85)', 2.5);
-    drawPoint(lastClick, ballColor, 9);
-    drawLabel(`${Math.round(getLength(hole.green, lastClick))}m`, lastClick.x + 12, lastClick.y);
-    drawLabel(`${Math.round(getLength(tee, lastClick))}m`,        lastClick.x + 12, lastClick.y + 16);
+    drawLine(tee, ball, 'rgba(0,0,0,0.85)', 2.5);
+    drawLine(hole.green, ball, 'rgba(0,0,0,0.85)', 2.5);
+    drawPoint(ball, ballColor, 9);
+    drawLabel(`${Math.round(getLength(hole.green, ball))}m`, ball.x + 12, ball.y);
+    drawLabel(`${Math.round(getLength(tee, ball))}m`,        ball.x + 12, ball.y + 16);
   } else {
     if (firstPoint) drawPoint(firstPoint, ballColor, 9);
     if (lastClick) drawPoint(lastClick, ballColor, 9);
@@ -308,10 +316,43 @@ function updateDisplay() {
   }
 }
 
+// In Live mode (normal measurement only), the ball marker follows the
+// live GPS fix. Returns null in Shot planner mode, in p2p, or when
+// the blue dot isn't currently being drawn (no fix, out of range, or
+// hole not calibrated).
+function liveBallPos() {
+  if (!gpsEnabled || measurementModeSwitch.checked) return null;
+  if (!currentGps || !gpsInRange) return null;
+  return gpsToPng(currentHole, currentGps);
+}
+
+function drawGpsMarker() {
+  if (!gpsEnabled || !currentGps || !gpsInRange) return;
+  const pos = gpsToPng(currentHole, currentGps);
+  if (!pos) return;
+  // Accuracy halo, scaled into PNG metres using the hole's known scale.
+  const accLogical = Math.min(40, Math.max(5, currentGps.accuracy || 10));
+  const hole = HOLES[currentHole];
+  const mPerPx = hole.holeLength / hole.pixelLength;
+  const accPx = accLogical / mPerPx;
+  ctx.beginPath();
+  ctx.arc(sx(pos.x), sx(pos.y), sx(accPx), 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 122, 255, 0.18)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(sx(pos.x), sx(pos.y), sx(6), 0, Math.PI * 2);
+  ctx.fillStyle = '#007aff';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = sx(2);
+  ctx.stroke();
+}
+
 function redraw() {
   clear();
   drawTeeAndGreen();
   updateDisplay();
+  drawGpsMarker();
 }
 
 function getCanvasPoint(e) {
@@ -330,17 +371,21 @@ const HIT_RADIUS = 16;
 
 function hitTest(p) {
   // Returns the *user-placed* dot under the pointer, or null.
-  // Tees and the green are intentionally not draggable.
+  // Tees and the green are intentionally not draggable. In Live mode +
+  // normal measurement the ball is GPS-driven, so it's not draggable
+  // either.
   if (measurementModeSwitch.checked) {
     if (lastClick  && getDistance(lastClick,  p) <= HIT_RADIUS) return 'last';
     if (firstPoint && getDistance(firstPoint, p) <= HIT_RADIUS) return 'first';
-  } else {
+  } else if (!gpsEnabled) {
     if (lastClick  && getDistance(lastClick,  p) <= HIT_RADIUS) return 'last';
   }
   return null;
 }
 
 function placeTap(p) {
+  // Live mode + normal: GPS owns the ball, ignore taps.
+  if (gpsEnabled && !measurementModeSwitch.checked) return;
   if (measurementModeSwitch.checked) {
     if (!firstPoint) {
       // 1st tap: drop first point on its own.
@@ -467,7 +512,494 @@ if (notesArea) {
   });
 }
 
+// ============================================================
+// Geolocation
+// ------------------------------------------------------------
+// Per-hole calibration: GPS (lat,lng) of the green-center and white
+// tee. The PNG already knows those two points in pixel space (see
+// HOLES.green and HOLES.tees.WHITE), so the two pairs uniquely define
+// a similarity transform (rotation + uniform scale + translation)
+// from world metres to PNG pixels.
+//
+// The user authors the calibration in the OSM modal: drag the two
+// pins onto the real green / white-tee on the OpenStreetMap view,
+// hit Save. Stored in localStorage.
+//
+// Live GPS uses watchPosition + a 5s tick that re-runs
+// getCurrentPosition, so the dot keeps refreshing even when the
+// browser sits on a stale fix.
+// ============================================================
+
+const GEO_KEY = 'gccb.geo.v1';
+// Defaults seeded from OpenStreetMap (overpass query against
+// way=269050363 "Golf & Country Club Basel"). For each `golf=hole` way
+// the first node is the WHITE tee and the last node is the green
+// centre; path lengths match the scorecard WHITE yardages to within
+// a few metres on every hole, which confirms the convention.
+// Per-hole entries saved via the calibration UI override these.
+const DEFAULT_GEO_CAL = {
+   1: { green: {lat:47.5418887, lng:7.4843423}, white: {lat:47.5399647, lng:7.4812424} },
+   2: { green: {lat:47.5446193, lng:7.4871021}, white: {lat:47.5416536, lng:7.4831177} },
+   3: { green: {lat:47.5429880, lng:7.4860829}, white: {lat:47.5445107, lng:7.4875823} },
+   4: { green: {lat:47.5433845, lng:7.4919301}, white: {lat:47.5430442, lng:7.4868768} },
+   5: { green: {lat:47.5425517, lng:7.4869251}, white: {lat:47.5432542, lng:7.4919020} },
+   6: { green: {lat:47.5397271, lng:7.4819818}, white: {lat:47.5423543, lng:7.4874227} },
+   7: { green: {lat:47.5410182, lng:7.4800307}, white: {lat:47.5400206, lng:7.4808843} },
+   8: { green: {lat:47.5398411, lng:7.4764645}, white: {lat:47.5417650, lng:7.4799822} },
+   9: { green: {lat:47.5390734, lng:7.4794042}, white: {lat:47.5396401, lng:7.4753755} },
+  10: { green: {lat:47.5377875, lng:7.4745928}, white: {lat:47.5390412, lng:7.4804233} },
+  11: { green: {lat:47.5396112, lng:7.4748310}, white: {lat:47.5379634, lng:7.4741471} },
+  12: { green: {lat:47.5401761, lng:7.4712932}, white: {lat:47.5398004, lng:7.4758020} },
+  13: { green: {lat:47.5372970, lng:7.4688792}, white: {lat:47.5402666, lng:7.4709472} },
+  14: { green: {lat:47.5388217, lng:7.4643919}, white: {lat:47.5372309, lng:7.4685252} },
+  15: { green: {lat:47.5363337, lng:7.4656981}, white: {lat:47.5387402, lng:7.4638286} },
+  16: { green: {lat:47.5356456, lng:7.4681121}, white: {lat:47.5359896, lng:7.4657840} },
+  17: { green: {lat:47.5366741, lng:7.4740291}, white: {lat:47.5361707, lng:7.4688041} },
+  18: { green: {lat:47.5389484, lng:7.4809357}, white: {lat:47.5370037, lng:7.4743482} },
+};
+// User overrides live in localStorage; geoCal is the merged view
+// (overrides on top of OSM defaults) used at runtime.
+let savedGeoCal = {};
+try { savedGeoCal = JSON.parse(localStorage.getItem(GEO_KEY)) || {}; } catch {}
+let geoCal = {};
+function rebuildGeoCal() {
+  geoCal = {};
+  for (let i = 1; i <= 18; i++) {
+    if (savedGeoCal[i]) geoCal[i] = savedGeoCal[i];
+    else if (DEFAULT_GEO_CAL[i]) geoCal[i] = DEFAULT_GEO_CAL[i];
+  }
+}
+rebuildGeoCal();
+
+// Approximate centre of Golf & Country Club Basel (Hagenthal-le-Bas).
+// Only used as a fallback when no hole is calibrated yet.
+const COURSE_CENTER_FALLBACK = { lat: 47.5402, lng: 7.4779 };
+// Disable live-position display beyond this distance from any
+// calibrated green (or, if none calibrated, the fallback centre).
+const COURSE_RADIUS_M = 800;
+
+let currentGps = null;        // { lat, lng, accuracy }
+let gpsWatchId = null;
+let gpsRefreshTimer = null;
+// Live mode is auto-derived: true iff the blue dot would currently be
+// drawn inside the current hole's PNG frame (in range + calibrated +
+// projected pixel within 0..COORD_W / 0..COORD_H). The user no longer
+// toggles this; the mode switches on every GPS fix and hole change.
+let gpsEnabled = false;
+let gpsInRange = false;
+let gpsDenied = false;
+
+function haversineMeters(a, b) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+  const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+// GPS (lat,lng) -> local east/north metres relative to origin.
+function gpsToLocalMeters(origin, p) {
+  const toRad = d => d * Math.PI / 180;
+  const R = 6371000;
+  const east  = R * toRad(p.lng - origin.lng) * Math.cos(toRad(origin.lat));
+  const north = R * toRad(p.lat - origin.lat);
+  return { east, north };
+}
+
+function getCourseCenter() {
+  const greens = Object.values(geoCal)
+    .map(c => c && c.green)
+    .filter(g => g && g.lat != null);
+  if (!greens.length) return COURSE_CENTER_FALLBACK;
+  const lat = greens.reduce((s, g) => s + g.lat, 0) / greens.length;
+  const lng = greens.reduce((s, g) => s + g.lng, 0) / greens.length;
+  return { lat, lng };
+}
+
+function isGpsInRange(gps) {
+  if (!gps) return false;
+  const greens = Object.values(geoCal)
+    .map(c => c && c.green)
+    .filter(g => g && g.lat != null);
+  const targets = greens.length ? greens : [COURSE_CENTER_FALLBACK];
+  for (const t of targets) {
+    if (haversineMeters(gps, t) <= COURSE_RADIUS_M) return true;
+  }
+  return false;
+}
+
+// Returns the PNG pixel (in 210x700 logical space) for a given GPS
+// position on the current hole, using its two-anchor calibration.
+// Returns null if the hole isn't calibrated.
+function gpsToPng(holeNum, gps) {
+  const cal = geoCal[holeNum];
+  if (!cal || !cal.green || !cal.white) return null;
+  if (cal.green.lat == null || cal.white.lat == null) return null;
+  const hole = HOLES[holeNum];
+  if (!hole) return null;
+
+  const aPx = hole.green;
+  const bPx = hole.tees.WHITE;
+  const dx = bPx.x - aPx.x;
+  const dy = bPx.y - aPx.y;
+
+  // World vector from green->white tee, in metres. We use (east, -north)
+  // so positive Y matches the PNG y-axis (which points down). The two
+  // anchor pairs then uniquely define a similarity transform.
+  const origin = cal.green;
+  const bMtr = gpsToLocalMeters(origin, cal.white);
+  const pMtr = gpsToLocalMeters(origin, gps);
+
+  const ex = bMtr.east;
+  const ny = -bMtr.north;
+  const denom = ex * ex + ny * ny;
+  if (denom < 1e-9) return null;
+  // Complex multiplier (re + i*im) with (ex + i*ny) -> (dx + i*dy).
+  const re = (dx * ex + dy * ny) / denom;
+  const im = (dy * ex - dx * ny) / denom;
+
+  const px = pMtr.east;
+  const py = -pMtr.north;
+  return {
+    x: aPx.x + re * px - im * py,
+    y: aPx.y + im * px + re * py,
+  };
+}
+
+function updateGpsStatus() {
+  const el = document.getElementById('gpsStatus');
+  const planner = document.getElementById('modePlannerBtn');
+  const live = document.getElementById('modeLiveBtn');
+  if (planner) planner.classList.toggle('active', !gpsEnabled);
+  if (live) live.classList.toggle('active', gpsEnabled);
+  if (live) live.classList.toggle('live', gpsEnabled);
+  if (!el) return;
+  if (gpsDenied)   { el.textContent = 'GPS permission denied — enable in browser settings'; return; }
+  if (plannerOverride) {
+    el.textContent = 'Shot planner (manual) — tap Live to resume auto';
+    return;
+  }
+  if (!gpsAcquiring && !currentGps) { el.textContent = 'Shot planner — tap the fairway to measure'; return; }
+  if (!currentGps) { el.textContent = 'Acquiring GPS…'; return; }
+  const acc = Math.round(currentGps.accuracy);
+  if (!gpsInRange) {
+    el.textContent = `Too far from course — Shot planner (±${acc}m)`;
+    return;
+  }
+  const cal = geoCal[currentHole];
+  const calibrated = cal && cal.green && cal.green.lat != null;
+  if (!calibrated) {
+    el.textContent = `±${acc}m · hole ${currentHole} not calibrated`;
+    return;
+  }
+  const dToGreen = Math.round(haversineMeters(currentGps, cal.green));
+  if (!gpsEnabled) {
+    el.textContent = `±${acc}m · ${dToGreen}m to green · off this hole, Shot planner`;
+    return;
+  }
+  el.textContent = `±${acc}m · ${dToGreen}m to green · Live`;
+}
+
+// True iff the live GPS dot would currently fall inside the visible
+// PNG canvas for the active hole. Drives the auto mode-switch.
+function gpsDotInFrameForCurrent() {
+  if (!currentGps || !gpsInRange) return false;
+  const pos = gpsToPng(currentHole, currentGps);
+  if (!pos) return false;
+  return pos.x >= 0 && pos.x <= COORD_W && pos.y >= 0 && pos.y <= COORD_H;
+}
+
+// Manual override: when true, the user has chosen to stay in Shot
+// planner regardless of where the GPS dot would be. Cleared by
+// tapping the Live location button.
+let plannerOverride = localStorage.getItem('gccb.plannerOverride') === '1';
+
+// Re-derives gpsEnabled (Live vs Shot planner) from the in-frame check,
+// unless the user has manually locked to Shot planner.
+// Returns true if the state actually changed.
+function autoUpdateMode() {
+  const next = plannerOverride ? false : gpsDotInFrameForCurrent();
+  if (next === gpsEnabled) return false;
+  gpsEnabled = next;
+  return true;
+}
+
+function setPlannerOverride(on) {
+  plannerOverride = !!on;
+  if (plannerOverride) localStorage.setItem('gccb.plannerOverride', '1');
+  else localStorage.removeItem('gccb.plannerOverride');
+  autoUpdateMode();
+  updateGpsStatus();
+  redraw();
+}
+
+let gpsAcquiring = false;
+
+function handleGpsFix(pos) {
+  currentGps = {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    accuracy: pos.coords.accuracy,
+  };
+  gpsInRange = isGpsInRange(currentGps);
+  gpsDenied = false;
+  autoUpdateMode();
+  updateGpsStatus();
+  redraw();
+}
+
+function handleGpsError(err) {
+  if (err && err.code === 1) {
+    gpsDenied = true;
+    gpsEnabled = false;
+    _stopGpsInternal(true);
+  }
+  updateGpsStatus();
+}
+
+function startGpsAcquisition() {
+  if (!navigator.geolocation || gpsDenied) {
+    updateGpsStatus();
+    return;
+  }
+  gpsAcquiring = true;
+  if (gpsWatchId == null) {
+    gpsWatchId = navigator.geolocation.watchPosition(
+      handleGpsFix, handleGpsError,
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 }
+    );
+  }
+  // Belt-and-braces: re-trigger a single-shot fix every 5s so the
+  // marker doesn't get stuck on a stale watchPosition cache.
+  if (!gpsRefreshTimer) {
+    gpsRefreshTimer = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        handleGpsFix, () => {},
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
+      );
+    }, 5000);
+  }
+  updateGpsStatus();
+  redraw();
+}
+
+function _stopGpsInternal(silent) {
+  gpsAcquiring = false;
+  gpsEnabled = false;
+  if (gpsWatchId != null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+  if (gpsRefreshTimer) {
+    clearInterval(gpsRefreshTimer);
+    gpsRefreshTimer = null;
+  }
+  if (!silent) updateGpsStatus();
+  redraw();
+}
+
+function refreshGpsOnce() {
+  if (!navigator.geolocation || gpsDenied) return;
+  // Bypass any cache to force a real fix.
+  navigator.geolocation.getCurrentPosition(
+    handleGpsFix, handleGpsError,
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+  );
+}
+
+// ============================================================
+// OSM calibration UI (Leaflet)
+// ============================================================
+
+let leafletMap = null;
+let calGreenMarker = null;
+let calWhiteMarker = null;
+let calUserMarker = null;
+let calLine = null;
+
+function ensureLeafletMap() {
+  if (leafletMap) return;
+  if (typeof L === 'undefined') return;       // Leaflet not loaded yet
+  const c = getCourseCenter();
+  leafletMap = L.map('calMap', { zoomControl: true }).setView([c.lat, c.lng], 17);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(leafletMap);
+
+  const greenIcon = L.divIcon({
+    className: 'cal-pin',
+    html: '<div class="cal-pin-dot" style="background:#2ecc71"></div><div class="cal-pin-label">Green</div>',
+    iconSize: [22, 22], iconAnchor: [11, 11]
+  });
+  const whiteIcon = L.divIcon({
+    className: 'cal-pin',
+    html: '<div class="cal-pin-dot" style="background:#fff"></div><div class="cal-pin-label">White tee</div>',
+    iconSize: [22, 22], iconAnchor: [11, 11]
+  });
+  calGreenMarker = L.marker([c.lat, c.lng], { draggable: true, icon: greenIcon }).addTo(leafletMap);
+  calWhiteMarker = L.marker([c.lat - 0.0006, c.lng], { draggable: true, icon: whiteIcon }).addTo(leafletMap);
+  calLine = L.polyline([calGreenMarker.getLatLng(), calWhiteMarker.getLatLng()], {
+    color: '#B3A16E', weight: 2, dashArray: '6,4'
+  }).addTo(leafletMap);
+  const updateLine = () => calLine.setLatLngs([calGreenMarker.getLatLng(), calWhiteMarker.getLatLng()]);
+  calGreenMarker.on('drag', updateLine);
+  calWhiteMarker.on('drag', updateLine);
+}
+
+function loadHoleCalibrationIntoMap(n) {
+  ensureLeafletMap();
+  if (!leafletMap) return;
+  const cal = geoCal[n];
+  let green, white;
+  if (cal && cal.green && cal.white && cal.green.lat != null && cal.white.lat != null) {
+    green = [cal.green.lat, cal.green.lng];
+    white = [cal.white.lat, cal.white.lng];
+  } else {
+    const c = getCourseCenter();
+    green = [c.lat, c.lng];
+    white = [c.lat - 0.0006, c.lng];
+  }
+  calGreenMarker.setLatLng(green);
+  calWhiteMarker.setLatLng(white);
+  calLine.setLatLngs([green, white]);
+  if (currentGps) {
+    if (!calUserMarker) {
+      const userIcon = L.divIcon({
+        className: 'cal-pin',
+        html: '<div class="cal-pin-dot" style="background:#007aff;border-color:#fff"></div>',
+        iconSize: [18, 18], iconAnchor: [9, 9]
+      });
+      calUserMarker = L.marker([currentGps.lat, currentGps.lng], { icon: userIcon, interactive: false }).addTo(leafletMap);
+    } else {
+      calUserMarker.setLatLng([currentGps.lat, currentGps.lng]);
+    }
+  }
+  leafletMap.fitBounds([green, white], { padding: [60, 60], maxZoom: 18 });
+}
+
+function openCalibration() {
+  const modal = document.getElementById('calModal');
+  if (!modal) return;
+  modal.hidden = false;
+  const sel = document.getElementById('calHoleSelect');
+  if (sel) sel.value = currentHole;
+  setTimeout(() => {
+    ensureLeafletMap();
+    if (leafletMap) {
+      leafletMap.invalidateSize();
+      loadHoleCalibrationIntoMap(currentHole);
+    }
+  }, 40);
+}
+
+function closeCalibration() {
+  const modal = document.getElementById('calModal');
+  if (modal) modal.hidden = true;
+}
+
+function saveCurrentCalibration() {
+  const n = parseInt(document.getElementById('calHoleSelect').value);
+  const g = calGreenMarker.getLatLng();
+  const w = calWhiteMarker.getLatLng();
+  savedGeoCal[n] = {
+    green: { lat: g.lat, lng: g.lng },
+    white: { lat: w.lat, lng: w.lng },
+  };
+  localStorage.setItem(GEO_KEY, JSON.stringify(savedGeoCal));
+  rebuildGeoCal();
+  if (currentGps) gpsInRange = isGpsInRange(currentGps);
+  updateGpsStatus();
+  redraw();
+  const btn = document.getElementById('calSaveBtn');
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = 'Saved ✓';
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1000);
+  }
+}
+
+function clearCurrentCalibration() {
+  // Drop the user override; the OSM default for this hole takes over.
+  const n = parseInt(document.getElementById('calHoleSelect').value);
+  delete savedGeoCal[n];
+  localStorage.setItem(GEO_KEY, JSON.stringify(savedGeoCal));
+  rebuildGeoCal();
+  if (currentGps) gpsInRange = isGpsInRange(currentGps);
+  updateGpsStatus();
+  loadHoleCalibrationIntoMap(n);
+  redraw();
+}
+
+function useGpsForMarker(which) {
+  if (!currentGps) {
+    alert('No GPS fix yet — enable GPS and wait for a lock.');
+    return;
+  }
+  const ll = [currentGps.lat, currentGps.lng];
+  if (which === 'green') calGreenMarker.setLatLng(ll);
+  else calWhiteMarker.setLatLng(ll);
+  calLine.setLatLngs([calGreenMarker.getLatLng(), calWhiteMarker.getLatLng()]);
+  leafletMap.panTo(ll);
+}
+
+(function wireGeoUi() {
+  const plannerBtn = document.getElementById('modePlannerBtn');
+  const liveBtn = document.getElementById('modeLiveBtn');
+  const gpsRefresh = document.getElementById('gpsRefreshBtn');
+  const calBtn = document.getElementById('calibrateBtn');
+  const calClose = document.getElementById('calCloseBtn');
+  const calSave = document.getElementById('calSaveBtn');
+  const calClear = document.getElementById('calClearBtn');
+  const calUseGreen = document.getElementById('calUseGpsGreen');
+  const calUseWhite = document.getElementById('calUseGpsWhite');
+  const calHoleSel = document.getElementById('calHoleSelect');
+
+  // Mode is auto-driven by the in-frame check, but tapping Shot
+  // planner always forces a manual override; Live location clears
+  // the override so auto switching resumes.
+  if (plannerBtn) plannerBtn.addEventListener('click', () => setPlannerOverride(true));
+  if (liveBtn) liveBtn.addEventListener('click', () => setPlannerOverride(false));
+  if (gpsRefresh) gpsRefresh.addEventListener('click', refreshGpsOnce);
+  if (calBtn) calBtn.addEventListener('click', openCalibration);
+  if (calClose) calClose.addEventListener('click', closeCalibration);
+  if (calSave) calSave.addEventListener('click', saveCurrentCalibration);
+  if (calClear) calClear.addEventListener('click', clearCurrentCalibration);
+  if (calUseGreen) calUseGreen.addEventListener('click', () => useGpsForMarker('green'));
+  if (calUseWhite) calUseWhite.addEventListener('click', () => useGpsForMarker('white'));
+
+  if (calHoleSel) {
+    for (let i = 1; i <= 18; i++) {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = `Hole ${i}`;
+      calHoleSel.appendChild(o);
+    }
+    calHoleSel.addEventListener('change', () => {
+      loadHoleCalibrationIntoMap(parseInt(calHoleSel.value));
+    });
+  }
+})();
+
 loadHole(currentHole);
+
+// Always acquire GPS in the background when permission is allowed.
+// The displayed mode (Shot planner vs Live) auto-switches per fix
+// based on whether the GPS-projected dot falls inside the current
+// hole's PNG frame, so no manual mode persistence is needed.
+(function autoStartGpsAcquisition() {
+  if (!navigator.geolocation) { updateGpsStatus(); return; }
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' }).then(s => {
+      if (s.state === 'denied') { gpsDenied = true; updateGpsStatus(); return; }
+      startGpsAcquisition();
+    }).catch(() => startGpsAcquisition());
+  } else {
+    startGpsAcquisition();
+  }
+})();
 
 // First-visit welcome popup. Persisted in localStorage so it only ever
 // shows once per device (until the user clears site data).
