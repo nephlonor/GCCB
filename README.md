@@ -9,6 +9,16 @@ iOS-friendly webapp for tracking shots on the Golf & Country Club Basel course.
 - Point-to-point measurement mode
 - Hole selector: Front 9 / Back 9 grid, dropdown, Prev/Next buttons, swipe gestures
 - Teebox selection (WHITE / YELLOW / BLUE / RED)
+- **Live location mode**: a live GPS dot drawn on the hole PNG, switching
+  automatically between **Shot planner** (tap-to-measure) and **Live location**
+  based on whether your position falls inside the current hole's frame, with
+  continuous refresh (`watchPosition` + a 5 s re-fix) and auto-disable beyond
+  800 m from any calibrated green
+- **OSM-derived calibration** for all 18 holes, with a Leaflet **Map**
+  calibration UI (draggable green / white-tee pins, per-hole overrides saved to
+  `localStorage["gccb.geo.v1"]`; "Clear hole" restores the OSM default)
+- Per-hole **notes** and marker positions saved locally
+  (`localStorage["gccb.state.v1"]`)
 - Dark-blue CI background, white GCCB shield logo
 - Installable as iOS home-screen app (PWA)
 
