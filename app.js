@@ -745,6 +745,9 @@ function handleGpsFix(pos) {
   };
   gpsInRange = isGpsInRange(currentGps);
   gpsDenied = false;
+  // Reveal the planner/Live selector when near the course; hide it when
+  // the player has walked beyond COURSE_RADIUS_M of every green.
+  setGpsBarVisible(gpsInRange);
   autoUpdateMode();
   updateGpsStatus();
   redraw();
@@ -809,154 +812,15 @@ function refreshGpsOnce() {
   );
 }
 
-// ============================================================
-// OSM calibration UI (Leaflet)
-// ============================================================
-
-let leafletMap = null;
-let calGreenMarker = null;
-let calWhiteMarker = null;
-let calUserMarker = null;
-let calLine = null;
-
-function ensureLeafletMap() {
-  if (leafletMap) return;
-  if (typeof L === 'undefined') return;       // Leaflet not loaded yet
-  const c = getCourseCenter();
-  leafletMap = L.map('calMap', { zoomControl: true }).setView([c.lat, c.lng], 17);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-  }).addTo(leafletMap);
-
-  const greenIcon = L.divIcon({
-    className: 'cal-pin',
-    html: '<div class="cal-pin-dot" style="background:#2ecc71"></div><div class="cal-pin-label">Green</div>',
-    iconSize: [22, 22], iconAnchor: [11, 11]
-  });
-  const whiteIcon = L.divIcon({
-    className: 'cal-pin',
-    html: '<div class="cal-pin-dot" style="background:#fff"></div><div class="cal-pin-label">White tee</div>',
-    iconSize: [22, 22], iconAnchor: [11, 11]
-  });
-  calGreenMarker = L.marker([c.lat, c.lng], { draggable: true, icon: greenIcon }).addTo(leafletMap);
-  calWhiteMarker = L.marker([c.lat - 0.0006, c.lng], { draggable: true, icon: whiteIcon }).addTo(leafletMap);
-  calLine = L.polyline([calGreenMarker.getLatLng(), calWhiteMarker.getLatLng()], {
-    color: '#B3A16E', weight: 2, dashArray: '6,4'
-  }).addTo(leafletMap);
-  const updateLine = () => calLine.setLatLngs([calGreenMarker.getLatLng(), calWhiteMarker.getLatLng()]);
-  calGreenMarker.on('drag', updateLine);
-  calWhiteMarker.on('drag', updateLine);
-}
-
-function loadHoleCalibrationIntoMap(n) {
-  ensureLeafletMap();
-  if (!leafletMap) return;
-  const cal = geoCal[n];
-  let green, white;
-  if (cal && cal.green && cal.white && cal.green.lat != null && cal.white.lat != null) {
-    green = [cal.green.lat, cal.green.lng];
-    white = [cal.white.lat, cal.white.lng];
-  } else {
-    const c = getCourseCenter();
-    green = [c.lat, c.lng];
-    white = [c.lat - 0.0006, c.lng];
-  }
-  calGreenMarker.setLatLng(green);
-  calWhiteMarker.setLatLng(white);
-  calLine.setLatLngs([green, white]);
-  if (currentGps) {
-    if (!calUserMarker) {
-      const userIcon = L.divIcon({
-        className: 'cal-pin',
-        html: '<div class="cal-pin-dot" style="background:#007aff;border-color:#fff"></div>',
-        iconSize: [18, 18], iconAnchor: [9, 9]
-      });
-      calUserMarker = L.marker([currentGps.lat, currentGps.lng], { icon: userIcon, interactive: false }).addTo(leafletMap);
-    } else {
-      calUserMarker.setLatLng([currentGps.lat, currentGps.lng]);
-    }
-  }
-  leafletMap.fitBounds([green, white], { padding: [60, 60], maxZoom: 18 });
-}
-
-function openCalibration() {
-  const modal = document.getElementById('calModal');
-  if (!modal) return;
-  modal.hidden = false;
-  const sel = document.getElementById('calHoleSelect');
-  if (sel) sel.value = currentHole;
-  setTimeout(() => {
-    ensureLeafletMap();
-    if (leafletMap) {
-      leafletMap.invalidateSize();
-      loadHoleCalibrationIntoMap(currentHole);
-    }
-  }, 40);
-}
-
-function closeCalibration() {
-  const modal = document.getElementById('calModal');
-  if (modal) modal.hidden = true;
-}
-
-function saveCurrentCalibration() {
-  const n = parseInt(document.getElementById('calHoleSelect').value);
-  const g = calGreenMarker.getLatLng();
-  const w = calWhiteMarker.getLatLng();
-  savedGeoCal[n] = {
-    green: { lat: g.lat, lng: g.lng },
-    white: { lat: w.lat, lng: w.lng },
-  };
-  localStorage.setItem(GEO_KEY, JSON.stringify(savedGeoCal));
-  rebuildGeoCal();
-  if (currentGps) gpsInRange = isGpsInRange(currentGps);
-  updateGpsStatus();
-  redraw();
-  const btn = document.getElementById('calSaveBtn');
-  if (btn) {
-    const orig = btn.textContent;
-    btn.textContent = 'Saved ✓';
-    btn.disabled = true;
-    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1000);
-  }
-}
-
-function clearCurrentCalibration() {
-  // Drop the user override; the OSM default for this hole takes over.
-  const n = parseInt(document.getElementById('calHoleSelect').value);
-  delete savedGeoCal[n];
-  localStorage.setItem(GEO_KEY, JSON.stringify(savedGeoCal));
-  rebuildGeoCal();
-  if (currentGps) gpsInRange = isGpsInRange(currentGps);
-  updateGpsStatus();
-  loadHoleCalibrationIntoMap(n);
-  redraw();
-}
-
-function useGpsForMarker(which) {
-  if (!currentGps) {
-    alert('No GPS fix yet — enable GPS and wait for a lock.');
-    return;
-  }
-  const ll = [currentGps.lat, currentGps.lng];
-  if (which === 'green') calGreenMarker.setLatLng(ll);
-  else calWhiteMarker.setLatLng(ll);
-  calLine.setLatLngs([calGreenMarker.getLatLng(), calWhiteMarker.getLatLng()]);
-  leafletMap.panTo(ll);
-}
+// The planner/Live selector (.gps-bar) is hidden until we confirm the
+// device is near the course (within COURSE_RADIUS_M of any green).
+const gpsBar = document.querySelector('.gps-bar');
+function setGpsBarVisible(v) { if (gpsBar) gpsBar.hidden = !v; }
 
 (function wireGeoUi() {
   const plannerBtn = document.getElementById('modePlannerBtn');
   const liveBtn = document.getElementById('modeLiveBtn');
   const gpsRefresh = document.getElementById('gpsRefreshBtn');
-  const calBtn = document.getElementById('calibrateBtn');
-  const calClose = document.getElementById('calCloseBtn');
-  const calSave = document.getElementById('calSaveBtn');
-  const calClear = document.getElementById('calClearBtn');
-  const calUseGreen = document.getElementById('calUseGpsGreen');
-  const calUseWhite = document.getElementById('calUseGpsWhite');
-  const calHoleSel = document.getElementById('calHoleSelect');
 
   // Mode is auto-driven by the in-frame check, but tapping Shot
   // planner always forces a manual override; Live location clears
@@ -964,23 +828,6 @@ function useGpsForMarker(which) {
   if (plannerBtn) plannerBtn.addEventListener('click', () => setPlannerOverride(true));
   if (liveBtn) liveBtn.addEventListener('click', () => setPlannerOverride(false));
   if (gpsRefresh) gpsRefresh.addEventListener('click', refreshGpsOnce);
-  if (calBtn) calBtn.addEventListener('click', openCalibration);
-  if (calClose) calClose.addEventListener('click', closeCalibration);
-  if (calSave) calSave.addEventListener('click', saveCurrentCalibration);
-  if (calClear) calClear.addEventListener('click', clearCurrentCalibration);
-  if (calUseGreen) calUseGreen.addEventListener('click', () => useGpsForMarker('green'));
-  if (calUseWhite) calUseWhite.addEventListener('click', () => useGpsForMarker('white'));
-
-  if (calHoleSel) {
-    for (let i = 1; i <= 18; i++) {
-      const o = document.createElement('option');
-      o.value = i; o.textContent = `Hole ${i}`;
-      calHoleSel.appendChild(o);
-    }
-    calHoleSel.addEventListener('change', () => {
-      loadHoleCalibrationIntoMap(parseInt(calHoleSel.value));
-    });
-  }
 })();
 
 loadHole(currentHole);
@@ -999,6 +846,25 @@ loadHole(currentHole);
   } else {
     startGpsAcquisition();
   }
+})();
+
+// One-shot proximity check on startup: reveal the planner/Live selector
+// only when the device is within COURSE_RADIUS_M of any green. We do not
+// start a persistent watch just for this; live fixes keep it updated.
+// Denied/unavailable keeps the selector hidden (planner-only default).
+(function checkCourseProximity() {
+  if (!navigator.geolocation) { setGpsBarVisible(false); return; }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const near = isGpsInRange({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      });
+      setGpsBarVisible(near);
+    },
+    () => { setGpsBarVisible(false); },
+    { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
+  );
 })();
 
 // First-visit welcome popup. Persisted in localStorage so it only ever
